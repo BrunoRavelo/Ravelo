@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referencia de Tamaños</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+    }
+
+    .size-box {
+      height: 150px;
+      border: 2px solid white;
+      transition: border-color 0.3s;
+      cursor: pointer;
+    }
+
+    .size-box:hover {
+      border-color: #ffc107;
+    }
+
+    .size-box.selected {
+      border-color: blue;
+    }
+
+    .half-box {
+      height: 75px;
+      width: 100%;
+    }
+
+    #size-description {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container text-center py-5">
+    <h1 class="mb-4">Referencia de Tamaños</h1>
+    <div class="row justify-content-center align-items-center">
+      <!-- Tamaños -->
+      <div class="col-2 mx-2 size-box" id="large" onclick="selectSize('large')"></div>
+      <div class="col-2 mx-2 size-box" id="medium" onclick="selectSize('medium')"></div>
+      <div class="col-2 mx-2 size-box" id="small" onclick="selectSize('small')"></div>
+      <div class="col-2 mx-2 size-box half-box" id="half" onclick="selectSize('half')"></div>
+    </div>
+
+    <!-- Descripción -->
+    <div class="mt-4">
+      <p id="size-description" class="text-info"></p>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Manejo de selección de tamaño
+    function selectSize(size) {
+      // Remover clases activas
+      document.querySelectorAll('.size-box').forEach(box => {
+        box.classList.remove('selected');
+      });
+
+      // Agregar clase activa al tamaño seleccionado
+      const selectedBox = document.getElementById(size);
+      selectedBox.classList.add('selected');
+
+      // Actualizar descripción
+      const descriptions = {
+        large: "Tamaño grande: ocupa tres cuadros horizontales.",
+        medium: "Tamaño mediano: ocupa dos cuadros horizontales.",
+        small: "Tamaño pequeño: ocupa un cuadro.",
+        half: "Media hoja: ocupa un cuadro más pequeño."
+      };
+      document.getElementById('size-description').textContent = descriptions[size];
+    }
+  </script>
+
+</body>
+</html>
