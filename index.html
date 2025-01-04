@@ -1257,120 +1257,158 @@
 
   <!-- Custom JS -->
   <script>
+    
     document.addEventListener("DOMContentLoaded", () => {
-        const scrollToTopBtn = document.getElementById("scrollToTopBtn");
-        const navbar = document.getElementById("navbar");
-        const modalImage = document.getElementById("modalImage");
-        const dropdownItems = document.querySelectorAll(".dropdown-item");
-        const galleryItems = document.querySelectorAll(".gallery-item");
-        const filterOptions = document.querySelectorAll(".filter-option");
-        const galleryIcons = document.querySelectorAll(".gallery-overlay a.ampliar-icono");
-        const infoIcons = document.querySelectorAll(".gallery-overlay a.info-icon");
-        const clearFiltersButton = document.getElementById("clearFilters");
+      const scrollToTopBtn = document.getElementById("scrollToTopBtn");
+      const navbar = document.getElementById("navbar");
+      const modalImage = document.getElementById("modalImage");
+      const dropdownItems = document.querySelectorAll(".dropdown-item");
+      const galleryItems = document.querySelectorAll(".gallery-item");
+      const filterOptions = document.querySelectorAll(".filter-option");
+      const galleryIcons = document.querySelectorAll(".gallery-overlay a.ampliar-icono");
+      const infoIcons = document.querySelectorAll(".gallery-overlay a.info-icon");
+      const clearFiltersButton = document.getElementById("clearFilters");
 
-        let prevScrollpos = window.pageYOffset;
-        let currentIndex = 0;
-        let filteredImages = [...galleryItems];
-        let activeFilters = { category: "all", size: [] };
+      let prevScrollpos = window.pageYOffset;
+      let currentIndex = 0;
+      let filteredImages = [...galleryItems];
+      let activeFilters = { category: "all", size: [] };
 
-        // Scroll behavior
-        window.onscroll = () => {
-            const currentScrollPos = window.pageYOffset;
-            scrollToTopBtn.style.display = window.scrollY > 300 ? "block" : "none";
-            navbar.style.top = prevScrollpos > currentScrollPos ? "0" : "-70px";
-            prevScrollpos = currentScrollPos;
-        };
+      // Restaurar categoría seleccionada al cargar
+      const savedCategory = localStorage.getItem("selectedCategory");
+      if (savedCategory) {
+          activeFilters.category = savedCategory;
+          dropdownItems.forEach((item) => {
+              item.classList.toggle("active", item.getAttribute("data-category") === savedCategory);
+          });
+      }
 
-        scrollToTopBtn.addEventListener("click", () => {
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        });
+      // Restaurar filtros de tamaño seleccionados al cargar
+      const savedSizes = JSON.parse(localStorage.getItem("selectedSizes")) || [];
+      if (savedSizes.length > 0) {
+          activeFilters.size = savedSizes;
+          filterOptions.forEach((option) => {
+              if (savedSizes.includes(option.value)) {
+                  option.checked = true;
+              }
+          });
+      }
 
-        // Modal functionality
-        galleryIcons.forEach((icon, index) => {
-            icon.addEventListener("click", (e) => {
-                e.preventDefault();
-                currentIndex = index;
-                showImage(currentIndex);
-                new bootstrap.Modal(document.getElementById("imageModal")).show();
-            });
-        });
+      updateGallery();
 
-        document.querySelector(".arrow.left").addEventListener("click", () => {
-            currentIndex = currentIndex > 0 ? currentIndex - 1 : filteredImages.length - 1;
-            showImage(currentIndex);
-        });
+      // Scroll behavior
+      window.onscroll = () => {
+          const currentScrollPos = window.pageYOffset;
+          scrollToTopBtn.style.display = window.scrollY > 300 ? "block" : "none";
+          navbar.style.top = prevScrollpos > currentScrollPos ? "0" : "-70px";
+          prevScrollpos = currentScrollPos;
+      };
 
-        document.querySelector(".arrow.right").addEventListener("click", () => {
-            currentIndex = currentIndex < filteredImages.length - 1 ? currentIndex + 1 : 0;
-            showImage(currentIndex);
-        });
+      scrollToTopBtn.addEventListener("click", () => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+      });
 
-        function showImage(index) {
-            modalImage.src = filteredImages[index].querySelector("img").src;
-        }
+      // Modal functionality
+      galleryIcons.forEach((icon, index) => {
+          icon.addEventListener("click", (e) => {
+              e.preventDefault();
+              currentIndex = index;
+              showImage(currentIndex);
+              new bootstrap.Modal(document.getElementById("imageModal")).show();
+          });
+      });
 
-        // Filter functionality
-        dropdownItems.forEach((item) => {
-            item.addEventListener("click", (e) => {
-                e.preventDefault();
-                activeFilters.category = item.getAttribute("data-category") || "all";
-                dropdownItems.forEach((i) => i.classList.remove("active"));
-                item.classList.add("active");
-                updateGallery();
-            });
-        });
+      document.querySelector(".arrow.left").addEventListener("click", () => {
+          currentIndex = currentIndex > 0 ? currentIndex - 1 : filteredImages.length - 1;
+          showImage(currentIndex);
+      });
 
-        filterOptions.forEach((option) => {
-            option.addEventListener("change", (event) => {
-                const size = option.value;
-                activeFilters.size = option.checked
-                    ? [...activeFilters.size, size]
-                    : activeFilters.size.filter((s) => s !== size);
-                updateGallery();
-            });
-        });
+      document.querySelector(".arrow.right").addEventListener("click", () => {
+          currentIndex = currentIndex < filteredImages.length - 1 ? currentIndex + 1 : 0;
+          showImage(currentIndex);
+      });
 
-        function updateGallery() {
-            galleryItems.forEach((galleryItem) => {
-                const itemCategories = galleryItem.getAttribute("data-category")?.split(" ") || [];
-                const itemSize = galleryItem.getAttribute("data-size") || "";
-                const matchesCategory =
-                    activeFilters.category === "all" || itemCategories.includes(activeFilters.category);
-                const matchesSize =
-                    activeFilters.size.length === 0 || activeFilters.size.includes(itemSize);
-                galleryItem.classList.toggle("hidden", !(matchesCategory && matchesSize));
-            });
-            filteredImages = Array.from(galleryItems).filter(
-                (item) => !item.classList.contains("hidden")
-            );
-        }
+      function showImage(index) {
+          modalImage.src = filteredImages[index].querySelector("img").src;
+      }
 
-        // Redirect to info.html
-        infoIcons.forEach((icon) => {
-            icon.addEventListener("click", (e) => {
-                e.preventDefault();
-                const id = icon.closest(".gallery-item").getAttribute("data-id");
-                window.location.href = `info.html?id=${id}`;
-            });
-        });
+      // Guardar categoría seleccionada al hacer clic
+      dropdownItems.forEach((item) => {
+          item.addEventListener("click", (e) => {
+              e.preventDefault();
+              const category = item.getAttribute("data-category") || "all";
+              activeFilters.category = category;
 
-        // Clear filters button functionality
-        clearFiltersButton.addEventListener("click", () => {
-            // Clear size filters only
-            filterOptions.forEach((option) => {
-                option.checked = false;
-            });
+              // Guardar en localStorage
+              localStorage.setItem("selectedCategory", category);
 
-            // Empty active size filters
-            activeFilters.size = [];
+              dropdownItems.forEach((i) => i.classList.remove("active"));
+              item.classList.add("active");
+              updateGallery();
+          });
+      });
 
-            // Update the gallery with the selected category and without size filters
-            updateGallery();
-        });
+      // Filter functionality
+      filterOptions.forEach((option) => {
+          option.addEventListener("change", (event) => {
+              const size = option.value;
+              activeFilters.size = option.checked
+                  ? [...activeFilters.size, size]
+                  : activeFilters.size.filter((s) => s !== size);
 
-        // Initialize gallery on load
-        updateGallery();
-    });
+              // Guardar en localStorage
+              localStorage.setItem("selectedSizes", JSON.stringify(activeFilters.size));
+
+              updateGallery();
+          });
+      });
+
+      function updateGallery() {
+          galleryItems.forEach((galleryItem) => {
+              const itemCategories = galleryItem.getAttribute("data-category")?.split(" ") || [];
+              const itemSize = galleryItem.getAttribute("data-size") || "";
+              const matchesCategory =
+                  activeFilters.category === "all" || itemCategories.includes(activeFilters.category);
+              const matchesSize =
+                  activeFilters.size.length === 0 || activeFilters.size.includes(itemSize);
+              galleryItem.classList.toggle("hidden", !(matchesCategory && matchesSize));
+          });
+          filteredImages = Array.from(galleryItems).filter(
+              (item) => !item.classList.contains("hidden")
+          );
+      }
+
+      // Redirect to info.html
+      infoIcons.forEach((icon) => {
+          icon.addEventListener("click", (e) => {
+              e.preventDefault();
+              const id = icon.closest(".gallery-item").getAttribute("data-id");
+              window.location.href = `info.html?id=${id}`;
+          });
+      });
+
+      // Clear filters button functionality
+      clearFiltersButton.addEventListener("click", () => {
+          // Clear size filters only
+          filterOptions.forEach((option) => {
+              option.checked = false;
+          });
+
+          // Empty active size filters
+          activeFilters.size = [];
+
+          // Clear localStorage for sizes
+          localStorage.removeItem("selectedSizes");
+
+          // Update the gallery with the selected category and without size filters
+          updateGallery();
+      });
+
+      // Initialize gallery on load
+      updateGallery();
+  });
+
+
 
 
 
