@@ -268,3 +268,14 @@ body {
 }
 
 
+/* Estilo responsivo para el texto del logo */
+.navbar-brand {
+  font-size: 2.5rem; /* Tamaño predeterminado */
+  white-space: nowrap; /* Evita que el texto se divida */
+}
+
+@media (max-width: 768px) {
+  .navbar-brand {
+      font-size: 1rem; /* Reduce el tamaño en dispositivos pequeños */
+  }
+}

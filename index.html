@@ -15,7 +15,7 @@
       <div class="container">
         <!-- Logo -->
         <a class="navbar-brand" href="#">
-          <img src="assets/logo.png" alt="Logo" style="height: 40px; margin-right: 10px;"> Alfredo Ravelo
+          <img src="assets/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;"> Alfredo Ravelo
         </a>
 
         <!-- Toggler for mobile view -->
@@ -27,7 +27,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav mx-auto">
             <li class="nav-item">
-              <a class="nav-link" href="#">Home</a>
+              <a class="nav-link home-link" href="#">Home</a>
             </li>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="galleryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -50,9 +50,14 @@
 
               </ul>
             </li>
+
+            <!--
             <li class="nav-item">
               <a class="nav-link" href="#">Contacto</a>
             </li>
+            -->
+
+
           </ul>
         </div>
       </div>
@@ -79,9 +84,9 @@
         <div id="sizeFilter" class="collapse show">
           <label><input type="checkbox" value="media" class="filter-option"> Media hoja (35 x 50 cm)</label><br>
           <label><input type="checkbox" value="hoja" class="filter-option"> 1 hoja (50x 70 com)</label><br>
-          <label><input type="checkbox" value="2hojas" class="filter-option">65 x 100 cm</label><br>
-          <label><input type="checkbox" value="3hojas" class="filter-option">85 x 200 cm</label><br>
-          <label><input type="checkbox" value="4hojas" class="filter-option">110 x 150 cm</label><br>
+          <label><input type="checkbox" value="2hojas" class="filter-option"> 65 x 100 cm</label><br>
+          <label><input type="checkbox" value="3hojas" class="filter-option"> 85 x 200 cm</label><br>
+          <label><input type="checkbox" value="4hojas" class="filter-option"> 110 x 150 cm</label><br>
         </div>
       </div>
     </div>
@@ -1257,156 +1262,186 @@
 
   <!-- Custom JS -->
   <script>
-    
+
     document.addEventListener("DOMContentLoaded", () => {
-      const scrollToTopBtn = document.getElementById("scrollToTopBtn");
-      const navbar = document.getElementById("navbar");
-      const modalImage = document.getElementById("modalImage");
-      const dropdownItems = document.querySelectorAll(".dropdown-item");
-      const galleryItems = document.querySelectorAll(".gallery-item");
-      const filterOptions = document.querySelectorAll(".filter-option");
-      const galleryIcons = document.querySelectorAll(".gallery-overlay a.ampliar-icono");
-      const infoIcons = document.querySelectorAll(".gallery-overlay a.info-icon");
-      const clearFiltersButton = document.getElementById("clearFilters");
+        const scrollToTopBtn = document.getElementById("scrollToTopBtn");
+        const navbar = document.getElementById("navbar");
+        const modalImage = document.getElementById("modalImage");
+        const dropdownItems = document.querySelectorAll(".dropdown-item");
+        const galleryItems = document.querySelectorAll(".gallery-item");
+        const filterOptions = document.querySelectorAll(".filter-option");
+        const galleryIcons = document.querySelectorAll(".gallery-overlay a.ampliar-icono");
+        const infoIcons = document.querySelectorAll(".gallery-overlay a.info-icon");
+        const clearFiltersButton = document.getElementById("clearFilters");
+        const homeLink = document.querySelector(".nav-link.home-link");
 
-      let prevScrollpos = window.pageYOffset;
-      let currentIndex = 0;
-      let filteredImages = [...galleryItems];
-      let activeFilters = { category: "all", size: [] };
+        let prevScrollpos = window.pageYOffset;
+        let currentIndex = 0;
+        let filteredImages = [...galleryItems];
+        let activeFilters = { category: "all", size: [] };
 
-      // Restaurar categoría seleccionada al cargar
-      const savedCategory = localStorage.getItem("selectedCategory");
-      if (savedCategory) {
-          activeFilters.category = savedCategory;
-          dropdownItems.forEach((item) => {
-              item.classList.toggle("active", item.getAttribute("data-category") === savedCategory);
-          });
-      }
+        // Restaurar categoría seleccionada al cargar
+        const savedCategory = localStorage.getItem("selectedCategory");
+        if (savedCategory) {
+            activeFilters.category = savedCategory;
+            dropdownItems.forEach((item) => {
+                item.classList.toggle("active", item.getAttribute("data-category") === savedCategory);
+            });
+        }
 
-      // Restaurar filtros de tamaño seleccionados al cargar
-      const savedSizes = JSON.parse(localStorage.getItem("selectedSizes")) || [];
-      if (savedSizes.length > 0) {
-          activeFilters.size = savedSizes;
-          filterOptions.forEach((option) => {
-              if (savedSizes.includes(option.value)) {
-                  option.checked = true;
-              }
-          });
-      }
+        // Restaurar filtros de tamaño seleccionados al cargar
+        const savedSizes = JSON.parse(localStorage.getItem("selectedSizes")) || [];
+        if (savedSizes.length > 0) {
+            activeFilters.size = savedSizes;
+            filterOptions.forEach((option) => {
+                if (savedSizes.includes(option.value)) {
+                    option.checked = true;
+                }
+            });
+        }
 
-      updateGallery();
+        updateGallery();
 
-      // Scroll behavior
-      window.onscroll = () => {
-          const currentScrollPos = window.pageYOffset;
-          scrollToTopBtn.style.display = window.scrollY > 300 ? "block" : "none";
-          navbar.style.top = prevScrollpos > currentScrollPos ? "0" : "-70px";
-          prevScrollpos = currentScrollPos;
-      };
+        // Scroll behavior
+        window.onscroll = () => {
+            const currentScrollPos = window.pageYOffset;
+            scrollToTopBtn.style.display = window.scrollY > 300 ? "block" : "none";
+            navbar.style.top = prevScrollpos > currentScrollPos ? "0" : "-70px";
+            prevScrollpos = currentScrollPos;
+        };
 
-      scrollToTopBtn.addEventListener("click", () => {
-          window.scrollTo({ top: 0, behavior: "smooth" });
-      });
+        scrollToTopBtn.addEventListener("click", () => {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        });
 
-      // Modal functionality
-      galleryIcons.forEach((icon, index) => {
-          icon.addEventListener("click", (e) => {
-              e.preventDefault();
-              currentIndex = index;
-              showImage(currentIndex);
-              new bootstrap.Modal(document.getElementById("imageModal")).show();
-          });
-      });
+        // Modal functionality
+        galleryIcons.forEach((icon, index) => {
+            icon.addEventListener("click", (e) => {
+                e.preventDefault();
+                currentIndex = index;
+                showImage(currentIndex);
+                new bootstrap.Modal(document.getElementById("imageModal")).show();
+            });
+        });
 
-      document.querySelector(".arrow.left").addEventListener("click", () => {
-          currentIndex = currentIndex > 0 ? currentIndex - 1 : filteredImages.length - 1;
-          showImage(currentIndex);
-      });
+        document.querySelector(".arrow.left").addEventListener("click", () => {
+            currentIndex = currentIndex > 0 ? currentIndex - 1 : filteredImages.length - 1;
+            showImage(currentIndex);
+        });
 
-      document.querySelector(".arrow.right").addEventListener("click", () => {
-          currentIndex = currentIndex < filteredImages.length - 1 ? currentIndex + 1 : 0;
-          showImage(currentIndex);
-      });
+        document.querySelector(".arrow.right").addEventListener("click", () => {
+            currentIndex = currentIndex < filteredImages.length - 1 ? currentIndex + 1 : 0;
+            showImage(currentIndex);
+        });
 
-      function showImage(index) {
-          modalImage.src = filteredImages[index].querySelector("img").src;
-      }
+        function showImage(index) {
+            modalImage.src = filteredImages[index].querySelector("img").src;
+        }
 
-      // Guardar categoría seleccionada al hacer clic
-      dropdownItems.forEach((item) => {
-          item.addEventListener("click", (e) => {
-              e.preventDefault();
-              const category = item.getAttribute("data-category") || "all";
-              activeFilters.category = category;
+        // Guardar categoría seleccionada al hacer clic
+        dropdownItems.forEach((item) => {
+            item.addEventListener("click", (e) => {
+                e.preventDefault();
+                const category = item.getAttribute("data-category") || "all";
+                activeFilters.category = category;
 
-              // Guardar en localStorage
-              localStorage.setItem("selectedCategory", category);
+                // Guardar en localStorage
+                localStorage.setItem("selectedCategory", category);
 
-              dropdownItems.forEach((i) => i.classList.remove("active"));
-              item.classList.add("active");
-              updateGallery();
-          });
-      });
+                dropdownItems.forEach((i) => i.classList.remove("active"));
+                item.classList.add("active");
+                updateGallery();
+            });
+        });
 
-      // Filter functionality
-      filterOptions.forEach((option) => {
-          option.addEventListener("change", (event) => {
-              const size = option.value;
-              activeFilters.size = option.checked
-                  ? [...activeFilters.size, size]
-                  : activeFilters.size.filter((s) => s !== size);
+        // Filter functionality
+        filterOptions.forEach((option) => {
+            option.addEventListener("change", (event) => {
+                const size = option.value;
+                activeFilters.size = option.checked
+                    ? [...activeFilters.size, size]
+                    : activeFilters.size.filter((s) => s !== size);
 
-              // Guardar en localStorage
-              localStorage.setItem("selectedSizes", JSON.stringify(activeFilters.size));
+                // Guardar en localStorage
+                localStorage.setItem("selectedSizes", JSON.stringify(activeFilters.size));
 
-              updateGallery();
-          });
-      });
+                updateGallery();
+            });
+        });
 
-      function updateGallery() {
-          galleryItems.forEach((galleryItem) => {
-              const itemCategories = galleryItem.getAttribute("data-category")?.split(" ") || [];
-              const itemSize = galleryItem.getAttribute("data-size") || "";
-              const matchesCategory =
-                  activeFilters.category === "all" || itemCategories.includes(activeFilters.category);
-              const matchesSize =
-                  activeFilters.size.length === 0 || activeFilters.size.includes(itemSize);
-              galleryItem.classList.toggle("hidden", !(matchesCategory && matchesSize));
-          });
-          filteredImages = Array.from(galleryItems).filter(
-              (item) => !item.classList.contains("hidden")
-          );
-      }
+        function updateGallery() {
+            galleryItems.forEach((galleryItem) => {
+                const itemCategories = galleryItem.getAttribute("data-category")?.split(" ") || [];
+                const itemSize = galleryItem.getAttribute("data-size") || "";
+                const matchesCategory =
+                    activeFilters.category === "all" || itemCategories.includes(activeFilters.category);
+                const matchesSize =
+                    activeFilters.size.length === 0 || activeFilters.size.includes(itemSize);
+                galleryItem.classList.toggle("hidden", !(matchesCategory && matchesSize));
+            });
+            filteredImages = Array.from(galleryItems).filter(
+                (item) => !item.classList.contains("hidden")
+            );
+        }
 
-      // Redirect to info.html
-      infoIcons.forEach((icon) => {
-          icon.addEventListener("click", (e) => {
-              e.preventDefault();
-              const id = icon.closest(".gallery-item").getAttribute("data-id");
-              window.location.href = `info.html?id=${id}`;
-          });
-      });
+        // Redirect to info.html
+        infoIcons.forEach((icon) => {
+            icon.addEventListener("click", (e) => {
+                e.preventDefault();
+                const id = icon.closest(".gallery-item").getAttribute("data-id");
+                window.location.href = `info.html?id=${id}`;
+            });
+        });
 
-      // Clear filters button functionality
-      clearFiltersButton.addEventListener("click", () => {
-          // Clear size filters only
-          filterOptions.forEach((option) => {
-              option.checked = false;
-          });
+        // Clear filters button functionality
+        clearFiltersButton.addEventListener("click", () => {
+            // Clear size filters only
+            filterOptions.forEach((option) => {
+                option.checked = false;
+            });
 
-          // Empty active size filters
-          activeFilters.size = [];
+            // Empty active size filters
+            activeFilters.size = [];
 
-          // Clear localStorage for sizes
-          localStorage.removeItem("selectedSizes");
+            // Clear localStorage for sizes
+            localStorage.removeItem("selectedSizes");
 
-          // Update the gallery with the selected category and without size filters
-          updateGallery();
-      });
+            // Update the gallery with the selected category and without size filters
+            updateGallery();
+        });
 
-      // Initialize gallery on load
-      updateGallery();
-  });
+        // Funcionalidad para el enlace "Home"
+        homeLink.addEventListener("click", (e) => {
+            e.preventDefault(); // Evita el comportamiento predeterminado del enlace
+
+            // Limpia los filtros de tamaño
+            filterOptions.forEach((option) => {
+                option.checked = false;
+            });
+            activeFilters.size = [];
+
+            // Limpia localStorage para los filtros de tamaño
+            localStorage.removeItem("selectedSizes");
+
+            // Selecciona la categoría "all"
+            activeFilters.category = "all";
+            localStorage.setItem("selectedCategory", "all");
+
+            // Actualiza la galería
+            updateGallery();
+
+            // Desactiva cualquier enlace activo y activa "Ver todos"
+            dropdownItems.forEach((item) => item.classList.remove("active"));
+            const viewAllItem = document.querySelector(".dropdown-item[data-category='all']");
+            if (viewAllItem) {
+                viewAllItem.classList.add("active");
+            }
+        });
+
+        // Initialize gallery on load
+        updateGallery();
+    });
+
 
 
 
