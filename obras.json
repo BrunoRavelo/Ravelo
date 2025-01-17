@@ -53,15 +53,7 @@
     "description": "Flores etéreas en un juego de colores suaves que transmiten calma y ensoñación.",
     "award": ""
   },
-  {
-    "id": 7,
-    "title": "Cosecha de Peras",
-    "image": "assets/flores/flores7.jpg",
-    "measures": "50 x 70 cm",
-    "technique": "Acuarela sobre papel de algodón",
-    "description": "Un cesto lleno de peras maduras, representando la abundancia y la frescura de la naturaleza.",
-    "award": ""
-  },
+  
   {
     "id": 8,
     "title": "Jardín Abstracto",
@@ -69,15 +61,6 @@
     "measures": "50 x 70 cm",
     "technique": "Acuarela sobre papel de algodón",
     "description": "Un jardín vibrante de formas y colores abstractos que celebran la diversidad natural.",
-    "award": ""
-  },
-  {
-    "id": 9,
-    "title": "Racimos de Dulzura",
-    "image": "assets/flores/flores10.jpg",
-    "measures": "50 x 70 cm",
-    "technique": "Acuarela sobre papel de algodón",
-    "description": "Racimos de uvas en un entorno sereno, destacando la textura y los tonos profundos.",
     "award": ""
   },
 
@@ -1148,9 +1131,200 @@
     "technique": "Acuarela sobre papel de algodón",
     "description": "Retrato de una Catrina con maquillaje detallado y accesorios florales, reflejando la riqueza cultural y el respeto hacia los ancestros.",
     "award": ""
+  },
+
+
+
+  {
+    "id": 124,
+    "title": "Explosión Primaveral",
+    "description": "Un jarrón de flores que capturan la esencia de la primavera, con pinceladas suaves que evocan un jardín lleno de vida y colores vibrantes.",
+    "image": "assets/flores/flores11.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 125,
+    "title": "Blanco Sereno",
+    "description": "Un ramillete de flores blancas envueltas en un fondo etéreo, transmitiendo tranquilidad y pureza a través de su composición delicada.",
+    "image": "assets/flores/flores12.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 126,
+    "title": "Jarrón de Alegría",
+    "description": "Un jarrón azul repleto de margaritas y flores campestres, irradiando la alegría y frescura de un día soleado.",
+    "image": "assets/flores/flores13.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 127,
+    "title": "Riqueza Tropical",
+    "description": "Hojas y flores exóticas se entrelazan en una danza cromática que celebra la belleza salvaje de la naturaleza.",
+    "image": "assets/flores/flores14.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 128,
+    "title": "Ave del Paraíso",
+    "description": "Las icónicas flores del ave del paraíso emergen en tonos naranjas y púrpuras, destacándose contra un fondo de verdes profundos.",
+    "image": "assets/flores/flores15.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 129,
+    "title": "Campo de Girasoles",
+    "description": "Un paisaje dorado donde los girasoles se mecen bajo la luz del sol, creando una atmósfera cálida y nostálgica.",
+    "image": "assets/flores/flores16.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 130,
+    "title": "Rincón de Color",
+    "description": "Una mesa rústica adornada con un arreglo floral vibrante, acompañado de tazas que invitan a compartir un momento de calma.",
+    "image": "assets/flores/flores17.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 131,
+    "title": "Muñeca de Tradición",
+    "description": "Un encantador homenaje al Día de los Muertos, esta muñeca combina colores vibrantes y símbolos tradicionales en una representación lúdica y cultural.",
+    "image": "assets/catrinas/catrina4.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 132,
+    "title": "Melodías del Alma",
+    "description": "Un músico se pierde en la intensidad de su acordeón, creando una sinfonía de colores que refleja su pasión.",
+    "image": "assets/expresiones/expresion13.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 133,
+    "title": "El Faro en la Tormenta",
+    "description": "Un faro se erige como guardián solitario en medio de la tormenta, ofreciendo luz y esperanza ante la fuerza del océano.",
+    "image": "assets/paisajes/paisaje6.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 134,
+    "title": "Fuerza del Mar",
+    "description": "Olas gigantes rompen contra la costa, capturando la energía y majestuosidad indomable del océano.",
+    "image": "assets/paisajes/paisaje8.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 135,
+    "title": "El Candado del Tiempo",
+    "description": "Un candado oxidado que guarda secretos olvidados, atrapado entre las texturas y colores del tiempo.",
+    "image": "assets/naturalezamuerta/nat1.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 136,
+    "title": "Cerradura del Pasado",
+    "description": "Una puerta desgastada que cuenta historias de un pasado lleno de vivencias y memorias.",
+    "image": "assets/naturalezamuerta/nat2.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 137,
+    "title": "Racimos de Abundancia",
+    "description": "Un racimo de uvas vibrantes que simboliza la riqueza de la tierra bajo la luz cálida.",
+    "image": "assets/naturalezamuerta/nat3.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 138,
+    "title": "Oxidado en la Eternidad",
+    "description": "Una cadena anclada en un marco de colores intensos, atrapada en el paso del tiempo.",
+    "image": "assets/naturalezamuerta/nat4.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 139,
+    "title": "Cosecha en el Crepúsculo",
+    "description": "Peras en un cesto artesanal, capturadas en un momento de calma y abundancia.",
+    "image": "assets/naturalezamuerta/nat5.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 140,
+    "title": "Rugido de la Cadena",
+    "description": "Una cadena oxidada que destaca entre tonos cálidos, evocando fuerza y resistencia.",
+    "image": "assets/naturalezamuerta/nat6.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 143,
+    "title": "Ruinas de México",
+    "description": "Una acuarela que retrata la belleza de las ruinas históricas en el campo mexicano, mostrando la arquitectura colonial rodeada de naturaleza.",
+    "image": "assets/mexico/mexico12.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 141,
+    "title": "La Pirámide del Pueblito",
+    "description": "Un paisaje que muestra la emblemática Pirámide del Pueblito en Querétaro, rodeada de vegetación y con detalles de personas que transmiten la esencia cultural del lugar.",
+    "image": "assets/mexico/mexico13.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 142,
+    "title": "Las Trajineras de Xochimilco",
+    "description": "Una escena vibrante de las trajineras navegando por los canales de Xochimilco, capturando la tranquilidad y la naturaleza que rodea este sitio tradicional mexicano.",
+    "image": "assets/mexico/mexico14.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
+  },
+  {
+    "id": 144,
+    "title": "Charros Mexicanos",
+    "description": "Un homenaje a la tradición charra de México, con sombreros y figuras representativas en un estilo único que evoca la cultura y las raíces mexicanas.",
+    "image": "assets/mexico/mexico15.jpg",
+    "measures": "35 x 50 cm",
+    "technique": "Acuarela sobre papel de algodón",
+    "award": ""
   }
-
-
+  
 
   
 
