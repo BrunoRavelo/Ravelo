@@ -25,6 +25,12 @@
       display: none;
     }
 
+    #rect-1 { width: 100px; height: 70px; }
+    #rect-2 { width: 140px; height: 100px; }
+    #rect-3 { width: 200px; height: 130px; }
+    #rect-4 { width: 400px; height: 170px; }
+    #rect-5 { width: 300px; height: 220px; }
+
     .button-group {
       display: flex;
       gap: 10px;
@@ -44,6 +50,7 @@
     }
 
     .image-container img {
+      width: 300px; 
       height: auto;
     }
 
@@ -126,49 +133,6 @@
       const rect = document.getElementById(`rect-${size}`);
       rect.style.display = 'block';
     }
-
-    function resizeElements() {
-      // Obtener el ancho del viewport
-      const viewportWidth = window.innerWidth;
-
-      // Variable para el tamaño proporcional del sillón
-      let sillonWidth;
-
-      // Establecer proporciones según el ancho del viewport
-      if (viewportWidth <= 768) { // Pantallas pequeñas (celulares)
-        sillonWidth = viewportWidth * 0.5; // 50vw
-      } else if (viewportWidth <= 1024) { // Pantallas medianas (tablets)
-        sillonWidth = viewportWidth * 0.4; // 40vw
-      } else { // Pantallas grandes (computadoras)
-        sillonWidth = viewportWidth * 0.3; // 30vw
-      }
-
-      // Ajustar el ancho del sillón
-      const sillon = document.getElementById('sillon');
-      sillon.style.width = `${sillonWidth}px`;
-
-      // Ajustar los tamaños de los rectángulos en proporción al sillón
-      document.getElementById('rect-1').style.width = `${sillonWidth * 0.33}px`;
-      document.getElementById('rect-1').style.height = `${sillonWidth * 0.23}px`;
-
-      document.getElementById('rect-2').style.width = `${sillonWidth * 0.47}px`;
-      document.getElementById('rect-2').style.height = `${sillonWidth * 0.33}px`;
-
-      document.getElementById('rect-3').style.width = `${sillonWidth * 0.67}px`;
-      document.getElementById('rect-3').style.height = `${sillonWidth * 0.43}px`;
-
-      document.getElementById('rect-4').style.width = `${sillonWidth * 1.33}px`;
-      document.getElementById('rect-4').style.height = `${sillonWidth * 0.57}px`;
-
-      document.getElementById('rect-5').style.width = `${sillonWidth * 1}px`;
-      document.getElementById('rect-5').style.height = `${sillonWidth * 0.73}px`;
-    }
-
-    // Evento para redimensionar dinámicamente
-    window.addEventListener('resize', resizeElements);
-
-    // Llamar inicialmente para ajustar los tamaños
-    window.onload = resizeElements;
   </script>
 </body>
 </html>
