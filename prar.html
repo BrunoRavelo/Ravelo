@@ -6,18 +6,25 @@
   <title>Pintura AR</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- A-Frame y WebXR Polyfill -->
-  <script src="https://unpkg.com/aframe@1.4.1/dist/aframe.min.js"></script>
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <!-- WebXR Polyfill -->
   <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.js"></script>
-  <!-- Componente de Hit Test para A-Frame -->
-  <script src="https://unpkg.com/aframe-hit-test-component/dist/aframe-hit-test-component.min.js"></script>
+  
   <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
     /* Overlay genérico */
     .overlay {
       position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.85);
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.9);
       color: white;
       display: none;
       flex-direction: column;
@@ -25,162 +32,371 @@
       align-items: center;
       z-index: 2000;
       text-align: center;
-      padding: 1rem;
+      padding: 2rem;
     }
-    /* Loader */
-    #loader {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.8);
-      display: none;
-      align-items: center; justify-content: center;
-      color: white; z-index: 1000;
-    }
+
     /* Botón iniciar AR */
     #btn-start-ar {
       position: fixed;
-      bottom: 20px;
+      bottom: 30px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 1500;
+      padding: 15px 30px;
+      font-size: 18px;
+      border-radius: 25px;
     }
-    /* Mensaje de error AR */
-    .error-msg {
-      background: rgba(255, 0, 0, 0.8);
-      padding: 1rem;
-      border-radius: 0.5rem;
-      margin-top: 1rem;
+
+    /* Selector de tamaños */
+    #size-controls {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1500;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 10px;
       display: none;
+    }
+
+    /* Instrucciones */
+    #instructions {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 1500;
+      display: none;
+    }
+
+    /* Error messages */
+    .error-msg {
+      background: rgba(220, 53, 69, 0.9);
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 10px;
+      display: none;
+    }
+
+    /* A-Frame scene */
+    a-scene {
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .size-btn {
+      margin: 2px;
     }
   </style>
 </head>
 <body>
-  <!-- Advertencia dispositivos no móviles -->
-  <div id="mobile-warning" class="overlay d-flex">
-    <p class="h5 mb-4">
-      Esta experiencia AR solo funciona en celulares y tablets.<br>
-      Por favor, abre desde un dispositivo compatible.
-    </p>
-    <button id="btn-back" class="btn btn-light">Volver</button>
+
+  <!-- Warning para dispositivos no compatibles -->
+  <div id="mobile-warning" class="overlay">
+    <h3>⚠️ Dispositivo No Compatible</h3>
+    <p>Esta experiencia AR requiere:</p>
+    <ul style="text-align: left; max-width: 300px;">
+      <li>Dispositivo móvil (Android/iOS)</li>
+      <li>Navegador compatible con WebXR</li>
+      <li>Cámara trasera</li>
+    </ul>
+    <button id="btn-back" class="btn btn-light mt-3">Volver</button>
   </div>
 
   <!-- Botón para iniciar AR -->
-  <button id="btn-start-ar" class="btn btn-primary" aria-label="Iniciar realidad aumentada">Iniciar AR</button>
-  <div id="ar-error" class="error-msg" role="alert"></div>
+  <button id="btn-start-ar" class="btn btn-success btn-lg">
+    📱 Iniciar Realidad Aumentada
+  </button>
 
-  <!-- Selector de tamaños -->
-  <div class="container-fluid fixed-top mt-2" id="size-select">
-    <div class="row gx-1 justify-content-center">
-      <div class="col-auto">
-        <button class="btn btn-sm btn-primary size-btn" data-width="40" data-height="50">40×50 cm</button>
-      </div>
-      <div class="col-auto">
-        <button class="btn btn-sm btn-primary size-btn" data-width="50" data-height="70">50×70 cm</button>
-      </div>
-      <div class="col-auto">
-        <button class="btn btn-sm btn-primary size-btn" data-width="70" data-height="100">70×100 cm</button>
-      </div>
-      <div class="col-auto">
-        <button class="btn btn-sm btn-primary size-btn" data-width="100" data-height="120">100×120 cm</button>
-      </div>
+  <!-- Controles de tamaño -->
+  <div id="size-controls">
+    <div class="btn-group" role="group">
+      <button class="btn btn-sm btn-primary size-btn" data-width="0.4" data-height="0.5">40×50cm</button>
+      <button class="btn btn-sm btn-primary size-btn" data-width="0.5" data-height="0.7">50×70cm</button>
+      <button class="btn btn-sm btn-primary size-btn" data-width="0.7" data-height="1.0">70×100cm</button>
+      <button class="btn btn-sm btn-primary size-btn" data-width="1.0" data-height="1.2">100×120cm</button>
     </div>
   </div>
 
-  <!-- Loader / Indicador de escaneo -->
-  <div id="loader" class="d-flex">
-    <div class="text-center">
-      <p id="loader-text">Mueve el dispositivo lentamente en círculos para detectar superficies</p>
-      <div class="spinner-border text-light"></div>
-    </div>
+  <!-- Instrucciones -->
+  <div id="instructions">
+    <h5>📋 Instrucciones</h5>
+    <p>1. Apunta la cámara hacia una pared</p>
+    <p>2. Mueve el dispositivo lentamente</p>
+    <p>3. Toca donde quieres colocar la pintura</p>
+    <button id="hide-instructions" class="btn btn-sm btn-secondary mt-2">Entendido</button>
   </div>
 
-  <!-- Escena A-Frame con WebXR Hit Test -->
-  <a-scene embedded vr-mode-ui="enabled: false"
-           webxr="requiredFeatures: hit-test, dom-overlay; overlayElement: #size-select"
-           ar-hit-test="target: #painting;">
+  <!-- Mensajes de error -->
+  <div id="ar-error" class="error-msg"></div>
+
+  <!-- Escena A-Frame -->
+  <a-scene 
+    id="ar-scene"
+    embedded
+    vr-mode-ui="enabled: false"
+    webxr="requiredFeatures: hit-test,local-floor"
+    background="color: transparent"
+    renderer="colorManagement: true">
+    
+    <!-- Assets -->
+    <a-assets>
+      <img id="painting-texture" 
+           src="assets/animales/animales16.jpg"
+           crossorigin="anonymous">
+    </a-assets>
+
     <!-- Cámara -->
-    <a-camera id="camera"></a-camera>
-    <!-- Pintura AR, oculto hasta colocación -->
-    <a-entity id="painting"
-              geometry="primitive: plane; width: 0.5; height: 0.7"
-              material="src: #texturaPintura; transparent: true"
-              visible="false">
-    </a-entity>
-  </a-scene>
+    <a-camera 
+      id="ar-camera"
+      position="0 1.6 0"
+      cursor="rayOrigin: mouse">
+    </a-camera>
 
-  <!-- Textura oculta -->
-  <a-assets>
-    <img id="texturaPintura" src="assets/mexico/mexico3.jpg" crossorigin="anonymous">
-  </a-assets>
+    <!-- Entidad pintura (inicialmente invisible) -->
+    <a-plane 
+      id="painting"
+      src="#painting-texture"
+      width="0.5"
+      height="0.7"
+      position="0 1.5 -2"
+      visible="false"
+      shadow="cast: true">
+    </a-plane>
+
+    <!-- Cursor/Reticle para hit testing -->
+    <a-ring
+      id="cursor"
+      position="0 0 -1"
+      color="white"
+      radius-inner="0.01"
+      radius-outer="0.02"
+      visible="false">
+    </a-ring>
+
+  </a-scene>
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
-  (function() {
-    // Verificación de dispositivo: mobile o tablet con soporte táctil y WebXR
-    const isMobile = ((/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-                       || navigator.maxTouchPoints > 1)
-                       && ('xr' in navigator));
-    const warningEl = document.getElementById('mobile-warning');
-    const startBtn = document.getElementById('btn-start-ar');
-    const arErrorEl = document.getElementById('ar-error');
-    const sizeSelectEl = document.getElementById('size-select');
-    const loaderEl = document.getElementById('loader');
-    const sceneEl = document.querySelector('a-scene');
+    class ARPaintingApp {
+      constructor() {
+        this.scene = null;
+        this.camera = null;
+        this.painting = null;
+        this.cursor = null;
+        this.isARActive = false;
+        this.hitTestSource = null;
+        this.hitTestSourceRequested = false;
+        
+        this.init();
+      }
 
-    if (!isMobile) {
-      warningEl.style.display = 'flex';
-      sizeSelectEl.classList.add('d-none');
-      startBtn.classList.add('d-none');
-      loaderEl.classList.add('d-none');
-      sceneEl.classList.add('d-none');
+      init() {
+        // Verificar compatibilidad
+        if (!this.checkCompatibility()) {
+          this.showError('Dispositivo no compatible con WebXR AR');
+          return;
+        }
 
-      document.getElementById('btn-back').addEventListener('click', () => {
-        window.location.href = 'index.html';
-      });
-      return;
+        this.setupElements();
+        this.setupEventListeners();
+        this.checkWebXRSupport();
+      }
+
+      checkCompatibility() {
+        // Verificar si es dispositivo móvil
+        const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Verificar soporte táctil
+        const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        // Verificar WebXR
+        const hasWebXR = 'xr' in navigator;
+
+        console.log('Compatibility check:', { isMobile, hasTouch, hasWebXR });
+        
+        return isMobile && hasTouch && hasWebXR;
+      }
+
+      async checkWebXRSupport() {
+        if (!navigator.xr) {
+          this.showError('WebXR no soportado en este navegador');
+          return;
+        }
+
+        try {
+          const supported = await navigator.xr.isSessionSupported('immersive-ar');
+          if (!supported) {
+            this.showError('AR no soportado en este dispositivo');
+            return;
+          }
+          console.log('WebXR AR support confirmed');
+        } catch (error) {
+          console.error('Error checking WebXR support:', error);
+          this.showError('Error verificando soporte AR');
+        }
+      }
+
+      setupElements() {
+        // Elementos DOM
+        this.warningEl = document.getElementById('mobile-warning');
+        this.startBtn = document.getElementById('btn-start-ar');
+        this.sizeControls = document.getElementById('size-controls');
+        this.instructionsEl = document.getElementById('instructions');
+        this.errorEl = document.getElementById('ar-error');
+        
+        // Elementos A-Frame
+        this.scene = document.getElementById('ar-scene');
+        this.camera = document.getElementById('ar-camera');
+        this.painting = document.getElementById('painting');
+        this.cursor = document.getElementById('cursor');
+
+        // Mostrar controles si es compatible
+        if (this.checkCompatibility()) {
+          this.startBtn.style.display = 'block';
+        } else {
+          this.warningEl.style.display = 'flex';
+          this.startBtn.style.display = 'none';
+        }
+      }
+
+      setupEventListeners() {
+        // Botón volver
+        document.getElementById('btn-back')?.addEventListener('click', () => {
+          window.history.back();
+        });
+
+        // Botón iniciar AR
+        this.startBtn?.addEventListener('click', () => this.startAR());
+
+        // Ocultar instrucciones
+        document.getElementById('hide-instructions')?.addEventListener('click', () => {
+          this.instructionsEl.style.display = 'none';
+        });
+
+        // Botones de tamaño
+        document.querySelectorAll('.size-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const width = parseFloat(e.target.dataset.width);
+            const height = parseFloat(e.target.dataset.height);
+            this.changePaintingSize(width, height);
+            
+            // Actualizar botón activo
+            document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+          });
+        });
+
+        // Eventos de la escena A-Frame
+        this.scene?.addEventListener('enter-vr', () => this.onEnterAR());
+        this.scene?.addEventListener('exit-vr', () => this.onExitAR());
+        
+        // Touch events para colocar pintura
+        this.scene?.addEventListener('click', (e) => this.onSceneClick(e));
+      }
+
+      async startAR() {
+        try {
+          this.startBtn.style.display = 'none';
+          this.hideError();
+          
+          // Entrar en modo AR
+          await this.scene.enterAR();
+          
+        } catch (error) {
+          console.error('Error starting AR:', error);
+          this.showError('Error al iniciar AR: ' + error.message);
+          this.startBtn.style.display = 'block';
+        }
+      }
+
+      onEnterAR() {
+        console.log('Entered AR mode');
+        this.isARActive = true;
+        this.sizeControls.style.display = 'block';
+        this.instructionsEl.style.display = 'block';
+        this.cursor.setAttribute('visible', 'true');
+        
+        // Configurar hit testing
+        this.setupHitTesting();
+      }
+
+      onExitAR() {
+        console.log('Exited AR mode');
+        this.isARActive = false;
+        this.sizeControls.style.display = 'none';
+        this.instructionsEl.style.display = 'none';
+        this.cursor.setAttribute('visible', 'false');
+        this.painting.setAttribute('visible', 'false');
+        this.startBtn.style.display = 'block';
+        
+        // Limpiar hit testing
+        this.hitTestSource = null;
+        this.hitTestSourceRequested = false;
+      }
+
+      setupHitTesting() {
+        // El hit testing se maneja en el render loop si está disponible
+        const renderer = this.scene.renderer;
+        if (renderer && renderer.xr) {
+          this.hitTestSourceRequested = false;
+        }
+      }
+
+      onSceneClick(event) {
+        if (!this.isARActive) return;
+        
+        // Simular colocación de pintura en el centro de la pantalla
+        const camera = this.camera.object3D;
+        const direction = new THREE.Vector3(0, 0, -1);
+        direction.applyQuaternion(camera.quaternion);
+        
+        // Colocar pintura a 2 metros de distancia
+        const position = camera.position.clone().add(direction.multiplyScalar(2));
+        
+        this.placePainting(position, camera.quaternion);
+      }
+
+      placePainting(position, rotation) {
+        this.painting.object3D.position.copy(position);
+        this.painting.object3D.quaternion.copy(rotation);
+        this.painting.setAttribute('visible', 'true');
+        
+        console.log('Painting placed at:', position);
+      }
+
+      changePaintingSize(width, height) {
+        this.painting.setAttribute('width', width);
+        this.painting.setAttribute('height', height);
+        console.log(`Painting size changed to: ${width}x${height}`);
+      }
+
+      showError(message) {
+        this.errorEl.textContent = message;
+        this.errorEl.style.display = 'block';
+        setTimeout(() => this.hideError(), 5000);
+      }
+
+      hideError() {
+        this.errorEl.style.display = 'none';
+      }
     }
 
-    // Botón que inicia la sesión AR con manejo de errores
-    startBtn.style.display = 'block';
-    startBtn.addEventListener('click', async () => {
-      startBtn.classList.add('d-none');
-      try {
-        await sceneEl.enterAR();
-      } catch (err) {
-        arErrorEl.textContent = 'No se pudo iniciar AR: ' + err.message;
-        arErrorEl.style.display = 'block';
-      }
+    // Inicializar la aplicación cuando se cargue A-Frame
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM loaded, initializing AR Painting App...');
+      new ARPaintingApp();
     });
 
-    // Inicializar selector de tamaños
-    document.querySelectorAll('.size-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const w = btn.dataset.width / 100;
-        const h = btn.dataset.height / 100;
-        document.getElementById('painting').setAttribute('geometry', { width: w, height: h });
-      });
-    });
-
-    // Eventos Hit Test
-    sceneEl.addEventListener('enter-vr', () => {
-      if (!sceneEl.is('ar-mode')) return;
-      loaderEl.style.display = 'flex';
-
-      sceneEl.addEventListener('ar-hit-test-achieved', () => {
-        loaderEl.style.display = 'none';
-      }, { once: true });
-
-      sceneEl.addEventListener('ar-hit-test-select', (evt) => {
-        const { position, orientation } = evt.detail;
-        const painting = document.getElementById('painting');
-        painting.object3D.position.copy(position);
-        painting.object3D.quaternion.copy(orientation);
-        painting.setAttribute('visible', 'true');
-      }, { once: true });
-    });
-  })();
   </script>
 </body>
 </html>
