@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pintura AR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+    <style>
+        .arjs-loader {
+            height: 100vh;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 1000;
+        }
+        .d-none {
+            display: none!important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Alerta desktop -->
+    <div class="alert alert-warning d-none d-md-block m-0 rounded-0 text-center">
+        Para mejor experiencia usa un celular
+    </div>
+
+    <!-- Selector tamaños -->
+    <div class="container-fluid fixed-top mt-2">
+        <div class="row gx-1 justify-content-center">
+            <div class="col-auto">
+                <button class="btn btn-sm btn-primary size-btn" data-width="40" data-height="50">40x50</button>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-sm btn-primary size-btn" data-width="50" data-height="70">50x70</button>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-sm btn-primary size-btn" data-width="70" data-height="100">70x100</button>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-sm btn-primary size-btn" data-width="100" data-height="120">100x120</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loader AR -->
+    <div class="arjs-loader">
+        <div class="text-center">
+            <p>Apunta a una pared y mueve el teléfono lentamente</p>
+            <div class="spinner-border text-primary"></div>
+        </div>
+    </div>
+
+    <!-- Escena AR -->
+    <a-scene 
+        vr-mode-ui="enabled: false"
+        arjs="trackingMethod: best; sourceType: webcam;"
+        renderer="logarithmicDepthBuffer: true;"
+        embedded>
+
+        <a-camera gps-camera rotation-reader></a-camera>
+
+        <!-- Pintura principal -->
+        <a-entity
+            id="painting"
+            geometry="primitive: plane; width: 0.4; height: 0.5"
+            material="src: #texturaPintura; transparent: true"
+            rotation="-90 0 0"
+            scale="0.4 0.5 1"
+            visible="false"
+            arjs-hit-test="target: #painting; type: geo">
+        </a-entity>
+
+        <!-- Cursor para selección -->
+        <a-entity cursor="rayOrigin: mouse" raycaster="objects: .intersectable"></a-entity>
+    </a-scene>
+
+    <!-- Textura oculta -->
+    <img id="texturaPintura" src="assets/mexico/mexico3.jpg" crossorigin="anonymous" style="display:none;">
+
+    <!-- Polyfill iOS -->
+    <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuración inicial
+        const scene = document.querySelector('a-scene');
+        const painting = document.querySelector('#painting');
+        const loader = document.querySelector('.arjs-loader');
+        let paintingPlaced = false;
+
+        // Control de tamaños
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const width = btn.dataset.width / 100; // Convertir cm a metros
+                const height = btn.dataset.height / 100;
+                
+                painting.setAttribute('geometry', 'width', width);
+                painting.setAttribute('geometry', 'height', height);
+                painting.setAttribute('scale', `${width} ${height} 1`);
+            });
+        });
+
+        // Inicialización AR
+        scene.addEventListener('arjs-nft-loaded', () => {
+            loader.classList.add('d-none');
+        });
+
+        // Colocación en pared
+        window.addEventListener('click', () => {
+            if (!paintingPlaced) {
+                painting.setAttribute('visible', 'true');
+                paintingPlaced = true;
+            }
+        });
+
+        // Detección de compatibilidad
+        if (!navigator.xr) {
+            loader.innerHTML = `
+                <div class="text-center text-danger">
+                    <p>Tu navegador no soporta AR</p>
+                    <p>Usa Chrome en Android o Safari en iOS</p>
+                </div>
+            `;
+        }
+
+        // Polyfill para iOS
+        if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            new WebXRPolyfill();
+            loader.querySelector('p').textContent = "Mueve el dispositivo lentamente en círculos";
+        }
+    </script>
+</body>
+</html>
