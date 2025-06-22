@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>AR - Pintura</title>
+  <title>AR - Pintura Virtual</title>
   
-  <!-- A-Frame y AR.js -->
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
   
@@ -17,32 +16,33 @@
     }
 
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Arial, sans-serif;
       overflow: hidden;
-      background: #000;
+      background: transparent;
+      touch-action: manipulation;
     }
 
-    /* Pantalla de carga */
-    #loading-screen {
+    #loading {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: #404040;
+      background: rgba(26, 26, 26, 0.9);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       z-index: 2000;
-      color: white;
+      color: #fff;
+      backdrop-filter: blur(5px);
     }
 
-    .loading-spinner {
-      width: 50px;
-      height: 50px;
-      border: 4px solid #808080;
-      border-top: 4px solid white;
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #333;
+      border-top: 3px solid #fff;
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin-bottom: 20px;
@@ -53,55 +53,53 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Escena AR */
     #ar-scene {
       width: 100vw;
       height: 100vh;
       position: fixed;
       top: 0;
       left: 0;
+      background: transparent !important;
     }
 
-    /* Controles AR */
-    .ar-controls {
+    .controls {
       position: fixed;
       bottom: 30px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 15px;
+      gap: 12px;
       z-index: 1500;
     }
 
-    .ar-btn {
-      background: rgba(96, 96, 96, 0.9);
-      color: white;
-      border: none;
+    .btn {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       padding: 12px 20px;
-      border-radius: 25px;
+      border-radius: 20px;
       font-size: 14px;
-      font-weight: bold;
+      font-weight: 600;
       cursor: pointer;
       backdrop-filter: blur(10px);
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       transition: all 0.2s ease;
     }
 
-    .ar-btn:active {
+    .btn:active {
       transform: scale(0.95);
-      background: rgba(80, 80, 80, 0.9);
+      background: rgba(255, 255, 255, 0.25);
     }
 
-    /* Mensaje de instrucciones */
-    .ar-instructions {
+    .instructions {
       position: fixed;
       top: 30px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(0, 0, 0, 0.8);
-      color: white;
+      color: #fff;
       padding: 12px 20px;
-      border-radius: 20px;
+      border-radius: 15px;
       text-align: center;
       z-index: 1500;
       font-size: 14px;
@@ -109,16 +107,15 @@
       backdrop-filter: blur(5px);
     }
 
-    /* Mensaje de estado */
-    .status-message {
+    .status {
       position: fixed;
       top: 100px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(96, 96, 96, 0.9);
-      color: white;
-      padding: 10px 16px;
-      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 12px;
       text-align: center;
       z-index: 1500;
       font-size: 13px;
@@ -126,373 +123,337 @@
       backdrop-filter: blur(5px);
     }
 
-    /* Error screen */
-    #error-screen {
+    #error {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: #8B0000;
+      background: rgba(211, 47, 47, 0.95);
       display: none;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       z-index: 2000;
-      color: white;
+      color: #fff;
       text-align: center;
       padding: 20px;
-    }
-
-    #error-screen h3 {
-      margin-bottom: 20px;
-      font-size: 1.2rem;
-    }
-
-    #error-screen p {
-      margin-bottom: 20px;
-      font-size: 0.9rem;
-      line-height: 1.4;
+      backdrop-filter: blur(5px);
     }
 
     .error-btn {
-      background: white;
-      color: #8B0000;
+      background: #fff;
+      color: #d32f2f;
       border: none;
       padding: 12px 24px;
-      border-radius: 6px;
-      font-weight: bold;
+      border-radius: 8px;
+      font-weight: 600;
       cursor: pointer;
+      margin-top: 20px;
     }
 
-    /* Ocultar elementos UI de A-Frame */
-    .a-enter-vr-button {
-      display: none !important;
-    }
-
+    .a-enter-vr-button,
     .a-orientation-modal {
       display: none !important;
+    }
+
+    a-scene {
+      background: transparent !important;
     }
   </style>
 </head>
 <body>
 
-  <!-- Pantalla de carga -->
-  <div id="loading-screen">
-    <div class="loading-spinner"></div>
-    <p>Iniciando cámara AR...</p>
-    <p style="font-size: 0.8rem; margin-top: 10px; color: #cccccc;">
-      Permite el acceso a la cámara cuando se solicite
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Iniciando AR...</p>
+    <p style="font-size: 12px; margin-top: 10px; opacity: 0.7;">
+      Permite acceso a la cámara
     </p>
   </div>
 
-  <!-- Pantalla de error -->
-  <div id="error-screen">
+  <div id="error">
     <h3>Error de Cámara</h3>
-    <p id="error-message">No se pudo acceder a la cámara del dispositivo.</p>
-    <button class="error-btn" onclick="window.location.href='preview.html'">
-      Volver al Inicio
-    </button>
+    <p id="error-msg">No se pudo acceder a la cámara</p>
+    <button class="error-btn" onclick="location.reload()">Reintentar</button>
   </div>
 
-  <!-- Instrucciones AR -->
-  <div id="ar-instructions" class="ar-instructions">
-    Apunta hacia una pared y toca para colocar la pintura
+  <div id="instructions" class="instructions">
+    Toca la pantalla para colocar la pintura
   </div>
 
-  <!-- Mensaje de estado -->
-  <div id="status-message" class="status-message"></div>
+  <div id="status" class="status"></div>
 
-  <!-- Controles AR -->
-  <div class="ar-controls">
-    <button id="btn-place" class="ar-btn">Colocar Aquí</button>
-    <button id="btn-reset" class="ar-btn" style="display: none;">Recolocar</button>
-    <button id="btn-back" class="ar-btn">Salir</button>
+  <div class="controls">
+    <button id="place-btn" class="btn">Colocar</button>
+    <button id="reset-btn" class="btn" style="display: none;">Recolocar</button>
   </div>
 
-  <!-- Escena A-Frame -->
   <a-scene 
     id="ar-scene"
     embedded
-    arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono; patternRatio: 0.8; trackingMethod: best; maxDetectionRate: 60; canvasWidth: 640; canvasHeight: 480;"
     vr-mode-ui="enabled: false"
-    renderer="logarithmicDepthBuffer: true; colorManagement: true; antialias: true; alpha: true;"
-    background="color: transparent;"
-    style="display: none;">
+    renderer="logarithmicDepthBuffer: true; colorManagement: true; antialias: true; alpha: true; sortObjects: true;"
+    background="transparent: true;"
+    style="display: none; background: transparent !important;">
     
-    <!-- Assets -->
     <a-assets>
-      <img id="painting-texture" 
-           src="assets/carita.png" 
-           crossorigin="anonymous"
-           alt="Pintura para AR">
+      <a-mixin id="painting-material" 
+        geometry="primitive: plane; width: 0.6; height: 0.8"
+        material="color: #8B4513; opacity: 0.9; side: double; transparent: true"></a-mixin>
     </a-assets>
 
-    <!-- Cámara sin zoom -->
     <a-camera 
-      id="ar-camera"
-      position="0 0 0"
-      look-controls="enabled: false"
-      arjs-look-controls="smoothingFactor: 0.1"
-      cursor="rayOrigin: mouse;">
+      id="camera"
+      position="0 1.6 0"
+      look-controls="enabled: true"
+      wasd-controls="enabled: false"
+      cursor="rayOrigin: mouse; fuse: false;">
     </a-camera>
 
-    <!-- Pintura (inicialmente invisible) -->
-    <a-plane 
+    <a-entity 
       id="painting"
-      src="#painting-texture"
-      width="0.5"
-      height="0.5"
-      position="0 1.6 -1.5"
+      position="0 1.6 -2"
       visible="false"
-      geometry="primitive: plane"
-      material="shader: standard; transparent: false; side: double; alphaTest: 0.1;">
-    </a-plane>
+      animation__scale="property: scale; from: 0.5 0.5 0.5; to: 1 1 1; dur: 500; easing: easeOutBack; startEvents: placed;">
+      
+      <!-- Marco de la pintura -->
+      <a-box 
+        width="0.65" 
+        height="0.85" 
+        depth="0.05"
+        material="color: #8B4513; transparent: true; opacity: 0.9"
+        position="0 0 -0.03">
+      </a-box>
+      
+      <!-- Lienzo -->
+      <a-plane 
+        width="0.5" 
+        height="0.7"
+        material="color: #F5F5DC; transparent: true; opacity: 0.95"
+        position="0 0 0.01">
+      </a-plane>
+      
+      <!-- Elemento artístico simple -->
+      <a-circle 
+        radius="0.15"
+        material="color: #FF6B6B; transparent: true; opacity: 0.8"
+        position="0 0.1 0.02">
+      </a-circle>
+      
+      <a-box 
+        width="0.2" 
+        height="0.1" 
+        depth="0.01"
+        material="color: #4ECDC4; transparent: true; opacity: 0.8"
+        position="0 -0.15 0.02">
+      </a-box>
+      
+    </a-entity>
 
-    <!-- Iluminación -->
     <a-light type="ambient" color="#404040" intensity="0.6"></a-light>
-    <a-light type="directional" position="0 1 0.5" color="#ffffff" intensity="0.8"></a-light>
+    <a-light type="directional" position="0 2 1" color="#ffffff" intensity="0.8"></a-light>
 
   </a-scene>
 
   <script>
-    class ARApp {
+    class ARPainting {
       constructor() {
-        this.paintingPlaced = false;
-        this.isReady = false;
+        this.placed = false;
+        this.ready = false;
         this.init();
       }
 
       init() {
-        console.log('Inicializando AR App...');
         this.setupElements();
-        this.setupEventListeners();
-        this.showARScene(); 
-
+        this.setupEvents();
+        this.startAR();
       }
 
       setupElements() {
-        this.loadingScreen = document.getElementById('loading-screen');
-        this.errorScreen = document.getElementById('error-screen');
-        this.errorMessage = document.getElementById('error-message');
-        this.arInstructions = document.getElementById('ar-instructions');
-        this.statusMessage = document.getElementById('status-message');
-        
-        // Botones
-        this.placeBtn = document.getElementById('btn-place');
-        this.resetBtn = document.getElementById('btn-reset');
-        this.backBtn = document.getElementById('btn-back');
-        
-        // Elementos A-Frame
+        this.loading = document.getElementById('loading');
+        this.error = document.getElementById('error');
+        this.errorMsg = document.getElementById('error-msg');
+        this.instructions = document.getElementById('instructions');
+        this.status = document.getElementById('status');
         this.scene = document.getElementById('ar-scene');
-        this.camera = document.getElementById('ar-camera');
+        this.camera = document.getElementById('camera');
         this.painting = document.getElementById('painting');
+        this.placeBtn = document.getElementById('place-btn');
+        this.resetBtn = document.getElementById('reset-btn');
       }
 
-      setupEventListeners() {
-        // Botones
-        this.placeBtn.addEventListener('click', () => this.placePainting());
-        this.resetBtn.addEventListener('click', () => this.resetPainting());
-        this.backBtn.addEventListener('click', () => this.goBack());
-
-        // Eventos de la escena
-        this.scene.addEventListener('loaded', () => {
-          console.log('Escena A-Frame cargada');
-          this.onSceneReady();
+      setupEvents() {
+        this.placeBtn.onclick = () => this.placePainting();
+        this.resetBtn.onclick = () => this.resetPainting();
+        
+        // Wait for AR system to be ready
+        this.scene.addEventListener('arjs-video-loaded', () => {
+          this.onReady();
         });
 
-        // Touch en la escena
+        this.scene.addEventListener('loaded', () => {
+          console.log('A-Frame scene loaded');
+        });
+        
+        // Touch events for placement
         this.scene.addEventListener('touchend', (e) => {
-          if (this.isReady && !this.paintingPlaced) {
+          if (this.ready && !this.placed) {
             e.preventDefault();
             this.placePainting();
           }
         });
 
-        // Click para desktop testing
+        // Click events for desktop testing
         this.scene.addEventListener('click', (e) => {
-          if (this.isReady && !this.paintingPlaced) {
+          if (this.ready && !this.placed) {
+            e.preventDefault();
             this.placePainting();
           }
         });
 
-        // Ocultar instrucciones después de 8 segundos
+        // Auto-hide instructions
         setTimeout(() => {
-          if (this.arInstructions) {
-            this.arInstructions.style.display = 'none';
+          if (this.instructions) {
+            this.instructions.style.opacity = '0.5';
+            setTimeout(() => {
+              if (this.instructions) this.instructions.style.display = 'none';
+            }, 2000);
           }
-        }, 8000);
+        }, 6000);
       }
-/*
+
       async startAR() {
         try {
-          console.log('Solicitando acceso a cámara...');
-          
-          // Configurar cámara con parámetros específicos para evitar zoom
-          const constraints = {
-            video: {
+          // Verify camera access
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { 
               facingMode: 'environment',
-              width: { 
-                ideal: 1280, 
-                max: 1920,
-                min: 640 
-              },
-              height: { 
-                ideal: 720, 
-                max: 1080,
-                min: 480 
-              },
-              aspectRatio: { ideal: 16/9 },
-              zoom: false // Desactivar zoom si está disponible
+              width: { ideal: 640 },
+              height: { ideal: 480 }
             }
-          };
-
-          const stream = await navigator.mediaDevices.getUserMedia(constraints);
-          
-          // Detener stream temporal
+          });
           stream.getTracks().forEach(track => track.stop());
           
-          console.log('Cámara verificada, iniciando AR...');
-          this.showARScene();
+          // Small delay to ensure AR.js is ready
+          setTimeout(() => {
+            this.showScene();
+          }, 1000);
           
         } catch (error) {
-          console.error('Error al acceder a cámara:', error);
-          this.showError('No se pudo acceder a la cámara. Verifica los permisos.');
+          console.error('Camera error:', error);
+          this.showError('Cámara no disponible. Verifica permisos.');
         }
       }
-*/
-      showARScene() {
-        // Ocultar loading y mostrar escena
-        this.loadingScreen.style.display = 'none';
+
+      showScene() {
+        this.loading.style.display = 'none';
         this.scene.style.display = 'block';
         
-        console.log('Escena AR mostrada');
+        // Additional ready check after showing scene
+        setTimeout(() => {
+          if (!this.ready) {
+            this.onReady();
+          }
+        }, 2000);
       }
 
-      onSceneReady() {
-        console.log('Escena lista para uso');
-        this.isReady = true;
-        
-        // Configurar cámara sin zoom
-        //if (this.camera && this.camera.components.camera) {
-          //this.camera.components.camera.camera.zoom = 1;
-          //this.camera.components.camera.camera.fov = 75; // Campo de visión normal
-        //}
+      onReady() {
+        this.ready = true;
+        console.log('AR ready for placement');
+        this.showStatus('Listo - Toca para colocar', 3000);
       }
 
       placePainting() {
-        if (!this.isReady || this.paintingPlaced) return;
-        
-        console.log('Colocando pintura...');
+        if (!this.ready || this.placed) return;
         
         try {
-          // Obtener posición de la cámara
-          const cameraPosition = this.camera.object3D.position;
-          const cameraRotation = this.camera.object3D.rotation;
+          const camPos = this.camera.object3D.position;
+          const camRot = this.camera.object3D.rotation;
           
-          // Calcular posición frontal (1.5m de distancia)
-          const distance = 1.5;
-          const direction = new THREE.Vector3(0, 0, -distance);
-          direction.applyEuler(cameraRotation);
+          // Calculate position 2m in front of camera
+          const direction = new THREE.Vector3(0, 0, -2);
+          direction.applyEuler(camRot);
+          const newPos = camPos.clone().add(direction);
+          newPos.y = Math.max(1.0, newPos.y); // Minimum height of 1m
           
-          const paintingPosition = cameraPosition.clone().add(direction);
-          
-          // Asegurar que esté a una altura apropiada (1.6m del suelo)
-          paintingPosition.y = 1.6;
-          
-          // Posicionar pintura
-          this.painting.object3D.position.copy(paintingPosition);
-          
-          // Hacer que mire hacia la cámara
-          this.painting.object3D.lookAt(cameraPosition);
-          
-          // Mostrar pintura
+          this.painting.object3D.position.copy(newPos);
+          this.painting.object3D.lookAt(camPos);
           this.painting.setAttribute('visible', 'true');
-          this.paintingPlaced = true;
           
-          // Actualizar UI
-          this.arInstructions.style.display = 'none';
+          // Trigger animation
+          this.painting.emit('placed');
+          
+          this.placed = true;
           this.placeBtn.style.display = 'none';
           this.resetBtn.style.display = 'block';
+          this.instructions.style.display = 'none';
           
-          this.showStatus('Pintura colocada correctamente', 3000);
-          
-          console.log('Pintura colocada en:', paintingPosition);
+          this.showStatus('¡Pintura colocada!', 2000);
           
         } catch (error) {
-          console.error('Error al colocar pintura:', error);
-          this.showStatus('Error al colocar la pintura', 3000);
+          console.error('Placement error:', error);
+          this.showStatus('Error al colocar', 2000);
         }
       }
 
       resetPainting() {
-        console.log('Recolocando pintura...');
-        
         this.painting.setAttribute('visible', 'false');
-        this.paintingPlaced = false;
-        
-        // Actualizar UI
+        this.placed = false;
         this.placeBtn.style.display = 'block';
         this.resetBtn.style.display = 'none';
-        this.arInstructions.style.display = 'block';
+        this.instructions.style.display = 'block';
+        this.instructions.style.opacity = '1';
         
         this.showStatus('Toca para colocar nuevamente', 2000);
       }
 
-      goBack() {
-        console.log('Regresando al preview...');
-        window.location.href = 'preview.html';
-      }
-
       showStatus(message, duration = 3000) {
-        this.statusMessage.textContent = message;
-        this.statusMessage.style.display = 'block';
-        
+        this.status.textContent = message;
+        this.status.style.display = 'block';
         setTimeout(() => {
-          this.statusMessage.style.display = 'none';
+          if (this.status) this.status.style.display = 'none';
         }, duration);
       }
 
       showError(message) {
-        console.error('Error:', message);
-        this.errorMessage.textContent = message;
-        this.errorScreen.style.display = 'flex';
+        this.errorMsg.textContent = message;
+        this.error.style.display = 'flex';
       }
     }
 
-    // Verificar que A-Frame esté disponible antes de inicializar
+    // Initialize app
     window.addEventListener('load', () => {
       if (typeof AFRAME === 'undefined') {
-        console.error('A-Frame no se cargó');
-        document.getElementById('error-screen').style.display = 'flex';
-        document.getElementById('error-message').textContent = 'Error al cargar la librería AR';
+        document.getElementById('error').style.display = 'flex';
+        document.getElementById('error-msg').textContent = 'Error al cargar A-Frame';
         return;
       }
       
-      console.log('Iniciando aplicación AR...');
-      new ARApp();
-    });
-
-    // Manejar errores no capturados
-    window.addEventListener('error', (e) => {
-      console.error('Error no capturado:', e.error);
-    });
-
-    // Prevenir zoom con gestos
-    document.addEventListener('touchmove', function(e) {
-      if (e.touches.length > 1) {
-        e.preventDefault();
+      if (typeof ARJS === 'undefined') {
+        console.warn('AR.js not detected, but continuing...');
       }
+      
+      new ARPainting();
+    });
+
+    // Prevent zoom gestures and improve touch handling
+    document.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 1) e.preventDefault();
     }, { passive: false });
 
-    // Prevenir zoom con doble tap
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', function(e) {
-      const now = (new Date()).getTime();
-      if (now - lastTouchEnd <= 300) {
+    document.addEventListener('gesturestart', (e) => {
+      e.preventDefault();
+    });
+
+    let lastTouch = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouch <= 300) {
         e.preventDefault();
       }
-      lastTouchEnd = now;
+      lastTouch = now;
     }, false);
 
   </script>
