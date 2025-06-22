@@ -47,18 +47,7 @@
       border-radius: 25px;
     }
 
-    /* Selector de tamaños */
-    #size-controls {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1500;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 10px;
-      border-radius: 10px;
-      display: none;
-    }
+
 
     /* Instrucciones */
     #instructions {
@@ -115,15 +104,7 @@
     📱 Iniciar Realidad Aumentada
   </button>
 
-  <!-- Controles de tamaño -->
-  <div id="size-controls">
-    <div class="btn-group" role="group">
-      <button class="btn btn-sm btn-primary size-btn" data-width="0.4" data-height="0.5">40×50cm</button>
-      <button class="btn btn-sm btn-primary size-btn" data-width="0.5" data-height="0.7">50×70cm</button>
-      <button class="btn btn-sm btn-primary size-btn" data-width="0.7" data-height="1.0">70×100cm</button>
-      <button class="btn btn-sm btn-primary size-btn" data-width="1.0" data-height="1.2">100×120cm</button>
-    </div>
-  </div>
+
 
   <!-- Instrucciones -->
   <div id="instructions">
@@ -148,9 +129,11 @@
     
     <!-- Assets -->
     <a-assets>
+      <!-- Reemplaza 'ruta/a/tu/pintura.png' con la ruta real de tu imagen -->
       <img id="painting-texture" 
-           src="assets/animales/animales16.jpg"
-           crossorigin="anonymous">
+           src="assets/carita.png"
+           crossorigin="anonymous"
+           alt="Pintura para AR">
     </a-assets>
 
     <!-- Cámara -->
@@ -160,12 +143,12 @@
       cursor="rayOrigin: mouse">
     </a-camera>
 
-    <!-- Entidad pintura (inicialmente invisible) -->
+    <!-- Entidad pintura (inicialmente invisible) - Tamaño 50x50cm -->
     <a-plane 
       id="painting"
       src="#painting-texture"
       width="0.5"
-      height="0.7"
+      height="0.5"
       position="0 1.5 -2"
       visible="false"
       shadow="cast: true">
@@ -210,6 +193,7 @@
         this.setupElements();
         this.setupEventListeners();
         this.checkWebXRSupport();
+        this.checkImageLoading();
       }
 
       checkCompatibility() {
@@ -250,7 +234,6 @@
         // Elementos DOM
         this.warningEl = document.getElementById('mobile-warning');
         this.startBtn = document.getElementById('btn-start-ar');
-        this.sizeControls = document.getElementById('size-controls');
         this.instructionsEl = document.getElementById('instructions');
         this.errorEl = document.getElementById('ar-error');
         
@@ -283,19 +266,6 @@
           this.instructionsEl.style.display = 'none';
         });
 
-        // Botones de tamaño
-        document.querySelectorAll('.size-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const width = parseFloat(e.target.dataset.width);
-            const height = parseFloat(e.target.dataset.height);
-            this.changePaintingSize(width, height);
-            
-            // Actualizar botón activo
-            document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-          });
-        });
-
         // Eventos de la escena A-Frame
         this.scene?.addEventListener('enter-vr', () => this.onEnterAR());
         this.scene?.addEventListener('exit-vr', () => this.onExitAR());
@@ -322,7 +292,6 @@
       onEnterAR() {
         console.log('Entered AR mode');
         this.isARActive = true;
-        this.sizeControls.style.display = 'block';
         this.instructionsEl.style.display = 'block';
         this.cursor.setAttribute('visible', 'true');
         
@@ -333,7 +302,6 @@
       onExitAR() {
         console.log('Exited AR mode');
         this.isARActive = false;
-        this.sizeControls.style.display = 'none';
         this.instructionsEl.style.display = 'none';
         this.cursor.setAttribute('visible', 'false');
         this.painting.setAttribute('visible', 'false');
@@ -374,12 +342,6 @@
         console.log('Painting placed at:', position);
       }
 
-      changePaintingSize(width, height) {
-        this.painting.setAttribute('width', width);
-        this.painting.setAttribute('height', height);
-        console.log(`Painting size changed to: ${width}x${height}`);
-      }
-
       showError(message) {
         this.errorEl.textContent = message;
         this.errorEl.style.display = 'block';
@@ -388,6 +350,19 @@
 
       hideError() {
         this.errorEl.style.display = 'none';
+      }
+
+      checkImageLoading() {
+        const img = document.getElementById('painting-texture');
+        
+        img.addEventListener('load', () => {
+          console.log('Imagen de pintura cargada correctamente');
+        });
+        
+        img.addEventListener('error', () => {
+          console.error('Error cargando la imagen de la pintura');
+          this.showError('Error: No se pudo cargar la imagen de la pintura');
+        });
       }
     }
 
