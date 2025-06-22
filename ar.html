@@ -234,7 +234,6 @@
       position="0 0 0"
       look-controls="enabled: false"
       arjs-look-controls="smoothingFactor: 0.1"
-      camera="fov: 80; zoom: 1;"
       cursor="rayOrigin: mouse;">
     </a-camera>
 
@@ -375,10 +374,10 @@
         this.isReady = true;
         
         // Configurar cámara sin zoom
-        if (this.camera && this.camera.components.camera) {
-          this.camera.components.camera.camera.zoom = 1;
-          this.camera.components.camera.camera.fov = 75; // Campo de visión normal
-        }
+        //if (this.camera && this.camera.components.camera) {
+          //this.camera.components.camera.camera.zoom = 1;
+          //this.camera.components.camera.camera.fov = 75; // Campo de visión normal
+        //}
       }
 
       placePainting() {
