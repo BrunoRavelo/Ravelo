@@ -1,38 +1,70 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>AR.js Location‑Based Photo</title>
-    <!-- A-Frame -->
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <!-- AR.js: sólo la parte de location‑based -->
-    <script type="text/javascript" src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/three.js/build/ar-threex-location-only.js"></script>
-    <script type="text/javascript" src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar.js"></script>
-    <style>
-      body { margin: 0; overflow: hidden; }
-    </style>
-  </head>
-  <body>
-    <a-scene
-      vr-mode-ui="enabled: false"
-      embedded
-      arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
-    >
-      <!-- precarga de tu foto -->
-      <a-assets>
-        <img id="mi-foto" src="assets/carita.png" />
-      </a-assets>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>AR – Pintura GPS</title>
 
-      <!-- entidad de imagen situada en coordenadas GPS -->
-      <a-image
-        src="#mi-foto"
-        look-at="[gps-camera]"
-        scale="20 20 20"
-        gps-entity-place="latitude: 19.50000; longitude: -99.10000;"
-      ></a-image>
+  <!-- 1. A-Frame -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
 
-      <!-- cámara con componente GPS -->
-      <a-camera gps-camera rotation-reader></a-camera>
-    </a-scene>
-  </body>
+  <!-- 2. AR.js Location‑Based -->
+  <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/three.js/build/ar-threex-location-only.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar.js"></script>
+  <!-- (Reemplaza los scripts anteriores de aframe-ar.js puro :contentReference[oaicite:5]{index=5}) -->
+
+  <style>
+    /* … tu CSS existente sin cambios en container ni pantallas de carga … */
+    body { margin:0; overflow:hidden; background:#000; }
+  </style>
+</head>
+<body>
+  <!-- Carga/Errores/UI intactos -->
+
+  <!-- 3. Escena AR configurada para GPS -->
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true; antialias: true; alpha: true;"
+    arjs="sourceType: webcam; 
+          videoTexture: true; 
+          debugUIEnabled: false;
+          gpsMinDistance: 1;"
+    style="width:100vw; height:100vh;"
+  >
+    <!-- 4. Assets -->
+    <a-assets>
+      <img id="painting-texture" src="assets/carita.png" crossorigin="anonymous" />
+    </a-assets>
+
+    <!-- 5. Plano GPS‑anchored en coordenadas -->
+    <a-image
+      id="painting"
+      src="#painting-texture"
+      width="0.5"
+      height="0.5"
+      gps-entity-place="latitude: 19.4326018; longitude: -99.1332049;"
+      look-at="[gps-camera]"
+      visible="true"
+      material="shader: standard; transparent: true; alphaTest: 0.1;"
+    ></a-image>
+    <!-- (Sustituye tu <a-plane> original :contentReference[oaicite:6]{index=6}) -->
+
+    <!-- 6. Cámara GPS -->
+    <a-camera gps-camera rotation-reader></a-camera>
+  </a-scene>
+
+  <script>
+    // 7. Prevenir zoom táctil (igual que antes)
+    document.addEventListener('touchmove', e => {
+      if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', e => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, false);
+  </script>
+</body>
 </html>

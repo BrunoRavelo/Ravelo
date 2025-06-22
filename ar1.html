@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>AR - Pintura Virtual</title>
+  
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      overflow: hidden;
+      background: #000;
+      touch-action: manipulation;
+    }
+
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #1a1a1a;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      color: #fff;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #333;
+      border-top: 3px solid #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    #ar-scene {
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+
+    .controls {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 1500;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 12px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .instructions {
+      position: fixed;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 15px;
+      text-align: center;
+      z-index: 1500;
+      font-size: 14px;
+      max-width: 90%;
+      backdrop-filter: blur(5px);
+    }
+
+    .status {
+      position: fixed;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 12px;
+      text-align: center;
+      z-index: 1500;
+      font-size: 13px;
+      display: none;
+      backdrop-filter: blur(5px);
+    }
+
+    #error {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #d32f2f;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .error-btn {
+      background: #fff;
+      color: #d32f2f;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .a-enter-vr-button,
+    .a-orientation-modal {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Iniciando AR...</p>
+    <p style="font-size: 12px; margin-top: 10px; opacity: 0.7;">
+      Permite acceso a la cámara
+    </p>
+  </div>
+
+  <div id="error">
+    <h3>Error de Cámara</h3>
+    <p id="error-msg">No se pudo acceder a la cámara</p>
+    <button class="error-btn" onclick="location.reload()">Reintentar</button>
+  </div>
+
+  <div id="instructions" class="instructions">
+    Toca la pantalla para colocar la pintura
+  </div>
+
+  <div id="status" class="status"></div>
+
+  <div class="controls">
+    <button id="place-btn" class="btn">Colocar</button>
+    <button id="reset-btn" class="btn" style="display: none;">Recolocar</button>
+  </div>
+
+  <a-scene 
+    id="ar-scene"
+    embedded
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true; colorManagement: true; antialias: true; alpha: true;"
+    background="color: transparent;"
+    style="display: none;">
+    
+    <a-assets>
+      <a-mixin id="painting-material" 
+        geometry="primitive: plane; width: 0.6; height: 0.8"
+        material="color: #8B4513; opacity: 0.9; side: double"></a-mixin>
+    </a-assets>
+
+    <a-camera 
+      id="camera"
+      position="0 1.6 0"
+      look-controls="enabled: false"
+      arjs-look-controls="smoothingFactor: 0.1"
+      cursor="rayOrigin: mouse">
+    </a-camera>
+
+    <a-entity 
+      id="painting"
+      mixin="painting-material"
+      position="0 1.6 -2"
+      visible="false">
+      
+      <!-- Marco de la pintura -->
+      <a-box 
+        width="0.65" 
+        height="0.85" 
+        depth="0.05"
+        color="#8B4513"
+        position="0 0 -0.03">
+      </a-box>
+      
+      <!-- Lienzo -->
+      <a-plane 
+        width="0.5" 
+        height="0.7"
+        color="#F5F5DC"
+        position="0 0 0.01">
+      </a-plane>
+      
+      <!-- Elemento artístico simple -->
+      <a-circle 
+        radius="0.15"
+        color="#FF6B6B"
+        position="0 0.1 0.02">
+      </a-circle>
+      
+      <a-box 
+        width="0.2" 
+        height="0.1" 
+        depth="0.01"
+        color="#4ECDC4"
+        position="0 -0.15 0.02">
+      </a-box>
+      
+    </a-entity>
+
+    <a-light type="ambient" color="#404040" intensity="0.6"></a-light>
+    <a-light type="directional" position="0 2 1" color="#ffffff" intensity="0.8"></a-light>
+
+  </a-scene>
+
+  <script>
+    class ARPainting {
+      constructor() {
+        this.placed = false;
+        this.ready = false;
+        this.init();
+      }
+
+      init() {
+        this.setupElements();
+        this.setupEvents();
+        this.startAR();
+      }
+
+      setupElements() {
+        this.loading = document.getElementById('loading');
+        this.error = document.getElementById('error');
+        this.errorMsg = document.getElementById('error-msg');
+        this.instructions = document.getElementById('instructions');
+        this.status = document.getElementById('status');
+        this.scene = document.getElementById('ar-scene');
+        this.camera = document.getElementById('camera');
+        this.painting = document.getElementById('painting');
+        this.placeBtn = document.getElementById('place-btn');
+        this.resetBtn = document.getElementById('reset-btn');
+      }
+
+      setupEvents() {
+        this.placeBtn.onclick = () => this.placePainting();
+        this.resetBtn.onclick = () => this.resetPainting();
+        
+        this.scene.addEventListener('loaded', () => this.onReady());
+        
+        this.scene.addEventListener('touchend', (e) => {
+          if (this.ready && !this.placed) {
+            e.preventDefault();
+            this.placePainting();
+          }
+        });
+
+        // Auto-hide instructions
+        setTimeout(() => {
+          this.instructions.style.opacity = '0.5';
+          setTimeout(() => this.instructions.style.display = 'none', 2000);
+        }, 6000);
+      }
+
+      async startAR() {
+        try {
+          // Test camera access
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }
+          });
+          stream.getTracks().forEach(track => track.stop());
+          
+          this.showScene();
+        } catch (error) {
+          this.showError('Cámara no disponible. Verifica permisos.');
+        }
+      }
+
+      showScene() {
+        this.loading.style.display = 'none';
+        this.scene.style.display = 'block';
+      }
+
+      onReady() {
+        this.ready = true;
+        console.log('AR ready');
+      }
+
+      placePainting() {
+        if (!this.ready || this.placed) return;
+        
+        const camPos = this.camera.object3D.position;
+        const camRot = this.camera.object3D.rotation;
+        
+        // Calculate position 2m in front of camera
+        const direction = new THREE.Vector3(0, 0, -2);
+        direction.applyEuler(camRot);
+        const newPos = camPos.clone().add(direction);
+        newPos.y = 1.6; // Fixed height
+        
+        this.painting.object3D.position.copy(newPos);
+        this.painting.object3D.lookAt(camPos);
+        this.painting.setAttribute('visible', 'true');
+        
+        this.placed = true;
+        this.placeBtn.style.display = 'none';
+        this.resetBtn.style.display = 'block';
+        this.instructions.style.display = 'none';
+        
+        this.showStatus('¡Pintura colocada!', 2000);
+      }
+
+      resetPainting() {
+        this.painting.setAttribute('visible', 'false');
+        this.placed = false;
+        this.placeBtn.style.display = 'block';
+        this.resetBtn.style.display = 'none';
+        this.instructions.style.display = 'block';
+        this.instructions.style.opacity = '1';
+        
+        this.showStatus('Toca para colocar', 2000);
+      }
+
+      showStatus(message, duration = 3000) {
+        this.status.textContent = message;
+        this.status.style.display = 'block';
+        setTimeout(() => this.status.style.display = 'none', duration);
+      }
+
+      showError(message) {
+        this.errorMsg.textContent = message;
+        this.error.style.display = 'flex';
+      }
+    }
+
+    // Initialize app
+    window.addEventListener('load', () => {
+      if (typeof AFRAME === 'undefined') {
+        document.getElementById('error').style.display = 'flex';
+        return;
+      }
+      new ARPainting();
+    });
+
+    // Prevent zoom gestures
+    document.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+
+    let lastTouch = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouch <= 300) e.preventDefault();
+      lastTouch = now;
+    }, false);
+
+  </script>
+</body>
+</html>
