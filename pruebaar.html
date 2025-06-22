@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>AR.js Location‑Based Photo</title>
+    <!-- A-Frame -->
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <!-- AR.js: sólo la parte de location‑based -->
+    <script type="text/javascript" src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/three.js/build/ar-threex-location-only.js"></script>
+    <script type="text/javascript" src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar.js"></script>
+    <style>
+      body { margin: 0; overflow: hidden; }
+    </style>
+  </head>
+  <body>
+    <a-scene
+      vr-mode-ui="enabled: false"
+      embedded
+      arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
+    >
+      <!-- precarga de tu foto -->
+      <a-assets>
+        <img id="mi-foto" src="assets/carita.png" />
+      </a-assets>
+
+      <!-- entidad de imagen situada en coordenadas GPS -->
+      <a-image
+        src="#mi-foto"
+        look-at="[gps-camera]"
+        scale="20 20 20"
+        gps-entity-place="latitude: 19.50000; longitude: -99.10000;"
+      ></a-image>
+
+      <!-- cámara con componente GPS -->
+      <a-camera gps-camera rotation-reader></a-camera>
+    </a-scene>
+  </body>
+</html>
