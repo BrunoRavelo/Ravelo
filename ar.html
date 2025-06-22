@@ -268,7 +268,8 @@
         console.log('Inicializando AR App...');
         this.setupElements();
         this.setupEventListeners();
-        this.startAR();
+        this.showARScene(); 
+
       }
 
       setupElements() {
@@ -323,7 +324,7 @@
           }
         }, 8000);
       }
-
+/*
       async startAR() {
         try {
           console.log('Solicitando acceso a cámara...');
@@ -360,7 +361,7 @@
           this.showError('No se pudo acceder a la cámara. Verifica los permisos.');
         }
       }
-
+*/
       showARScene() {
         // Ocultar loading y mostrar escena
         this.loadingScreen.style.display = 'none';
