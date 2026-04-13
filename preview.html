@@ -21,254 +21,301 @@
     #video {
       position: fixed;
       inset: 0;
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       object-fit: cover;
     }
 
-    /* ── Painting overlay ────────────────────────── */
-    #painting-wrap {
+    /* ── Painting ────────────────────────────────── */
+    #paint-wrap {
       position: fixed;
       display: none;
       cursor: grab;
       touch-action: none;
       z-index: 10;
-      filter:
-        drop-shadow(0 2px 8px rgba(0,0,0,0.6))
-        drop-shadow(0 8px 32px rgba(0,0,0,0.4));
-      transition: width 0.08s, height 0.08s;
+      /* Dark/black modern frame */
     }
-    #painting-wrap.visible { display: block; }
-    #painting-wrap.dragging { cursor: grabbing; transition: none; }
+    #paint-wrap.visible  { display: block; }
+    #paint-wrap.dragging { cursor: grabbing; }
 
-    #painting-img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: fill;
-      pointer-events: none;
-      border: 6px solid #c8a96e;
-      outline: 2px solid rgba(0,0,0,0.3);
-      box-shadow: inset 0 0 12px rgba(0,0,0,0.25);
-    }
-
-    /* ── Dimensions overlay on painting ─────────── */
-    #painting-dims {
+    /* Dark wood frame via pseudo-elements */
+    #paint-wrap::before {
+      content: '';
       position: absolute;
-      bottom: -28px;
+      inset: -10px;
+      background: linear-gradient(145deg, #2a2218 0%, #111008 45%, #1e1810 100%);
+      border-radius: 2px;
+      box-shadow:
+        2px 2px 0 #080604,
+        -1px -1px 0 #3a3020,
+        0 14px 44px rgba(0,0,0,0.75),
+        0 4px 14px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,220,120,0.06);
+      z-index: -1;
+    }
+    /* Thin cream mat between frame and image */
+    #paint-wrap::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      background: #ece8df;
+      z-index: -1;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.2);
+    }
+
+    #paint-img {
+      display: block;
+      width: 100%; height: 100%;
+      object-fit: fill;   /* intentional: size is already set to correct aspect */
+      pointer-events: none;
+    }
+
+    /* Dims badge (shows on drag/hover) */
+    #paint-dims {
+      position: absolute;
+      bottom: -34px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0,0,0,0.72);
+      background: rgba(0,0,0,0.78);
       color: #ffc107;
       font-size: 11px;
-      padding: 3px 10px;
-      border-radius: 10px;
+      padding: 4px 12px;
+      border-radius: 12px;
       white-space: nowrap;
       pointer-events: none;
-      border: 1px solid rgba(255,193,7,0.25);
+      border: 1px solid rgba(255,193,7,0.22);
       opacity: 0;
       transition: opacity 0.2s;
     }
-    #painting-wrap:hover #painting-dims,
-    #painting-wrap.dragging #painting-dims { opacity: 1; }
+    #paint-wrap:hover #paint-dims,
+    #paint-wrap.dragging #paint-dims { opacity: 1; }
 
-    /* ── A4 calibration reference ────────────────── */
+    /* ── A4 reference frame ─────────────────────── */
     #a4-ref {
       position: fixed;
       display: none;
-      border: 2px dashed rgba(255, 210, 0, 0.9);
-      z-index: 9;
+      border: 2px dashed rgba(255,210,0,0.9);
+      z-index: 20;
       pointer-events: none;
     }
     #a4-ref.show { display: block; }
     #a4-label {
       position: absolute;
-      bottom: calc(100% + 5px);
+      bottom: calc(100% + 6px);
       left: 50%;
       transform: translateX(-50%);
-      color: rgba(255, 210, 0, 0.95);
+      color: rgba(255,210,0,0.95);
       font-size: 11px;
       white-space: nowrap;
-      background: rgba(0,0,0,0.6);
-      padding: 3px 10px;
-      border-radius: 10px;
+      background: rgba(0,0,0,0.7);
+      padding: 3px 12px;
+      border-radius: 12px;
+    }
+    #a4-tip {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,210,0,0.7);
+      font-size: 10px;
+      white-space: nowrap;
+      text-align: center;
     }
 
-    /* ── 2-point calibration tap markers ─────────── */
-    .calib-tap {
+    /* ── 2-point calibration ────────────────────── */
+    .calib-dot {
       position: fixed;
-      width: 24px; height: 24px;
+      width: 26px; height: 26px;
       border: 2px solid #ffd200;
       border-radius: 50%;
-      transform: translate(-50%, -50%);
+      transform: translate(-50%,-50%);
       z-index: 30;
       pointer-events: none;
     }
-    .calib-tap::after {
+    .calib-dot::after {
       content: '';
       position: absolute;
-      inset: 4px;
+      inset: 5px;
       background: #ffd200;
       border-radius: 50%;
     }
-    #calib-line {
-      position: fixed;
-      z-index: 29;
-      pointer-events: none;
-      top: 0; left: 0;
+    #calib-svg {
+      position: fixed; inset: 0;
       width: 100%; height: 100%;
+      z-index: 29; pointer-events: none;
     }
+    #calib-overlay {
+      position: fixed; inset: 0;
+      z-index: 28; display: none; cursor: crosshair;
+    }
+    #calib-overlay.show { display: block; }
+
+    /* ── Screenshot canvas (hidden) ─────────────── */
+    #snap-canvas { display: none; }
+
+    /* Flash effect */
+    #flash {
+      position: fixed; inset: 0;
+      background: #fff;
+      opacity: 0; pointer-events: none;
+      z-index: 200;
+      transition: opacity 0.06s;
+    }
+    #flash.on { opacity: 0.9; }
+
+    /* Screenshot preview */
+    #snap-preview {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.92);
+      display: none;
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 180; gap: 16px; padding: 24px;
+    }
+    #snap-preview.show { display: flex; }
+    #snap-preview-img {
+      max-width: 100%; max-height: 58vh;
+      object-fit: contain; border-radius: 8px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+    }
+    .snap-btns { display: flex; gap: 12px; }
+    .snap-btn {
+      padding: 12px 28px; border-radius: 24px;
+      font-size: 14px; font-weight: bold;
+      cursor: pointer; border: none;
+    }
+    #snap-save  { background: #ffc107; color: #000; }
+    #snap-close { background: rgba(255,255,255,0.13); color: #fff; }
 
     /* ── Top bar ─────────────────────────────────── */
     #top-bar {
       position: fixed;
       top: 0; left: 0; right: 0;
       height: 56px;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+      background: linear-gradient(to bottom, rgba(0,0,0,0.85), transparent);
       display: flex;
       align-items: center;
-      padding: 0 12px;
-      gap: 8px;
+      padding: 0 10px;
+      gap: 6px;
       z-index: 50;
     }
-
     .top-btn {
-      background: rgba(255,255,255,0.14);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.13);
       color: #fff;
       padding: 7px 13px;
       border-radius: 20px;
-      font-size: 13px;
+      font-size: 12px;
       cursor: pointer;
-      transition: background 0.2s;
       white-space: nowrap;
       flex-shrink: 0;
+      transition: background 0.15s;
     }
-    .top-btn:active { background: rgba(255,255,255,0.3); }
-    .top-btn.active-yellow {
-      background: rgba(255,193,7,0.35);
-      border-color: #ffc107;
-      color: #000;
+    .top-btn:active { background: rgba(255,255,255,0.28); }
+    .top-btn.lit {
+      background: rgba(255,193,7,0.28);
+      border-color: rgba(255,193,7,0.55);
+      color: #ffd860;
     }
-
     #top-title {
       flex: 1;
-      color: rgba(255,255,255,0.8);
+      color: rgba(255,255,255,0.72);
       font-family: 'Times New Roman', serif;
       font-size: 14px;
       text-align: center;
-      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
     }
 
-    /* ── Status bar ──────────────────────────────── */
+    /* ── Status pills ────────────────────────────── */
     #status-bar {
       position: fixed;
-      top: 60px;
-      left: 50%;
+      top: 62px; left: 50%;
       transform: translateX(-50%);
-      z-index: 50;
-      pointer-events: none;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
+      z-index: 50; pointer-events: none;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 5px;
     }
-
-    .status-pill {
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(6px);
+    .pill {
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(8px);
       color: #fff;
       padding: 5px 16px;
       border-radius: 20px;
       font-size: 12px;
       white-space: nowrap;
       border: 1px solid rgba(255,255,255,0.1);
-      display: none;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.22s, transform 0.22s;
     }
-    .status-pill.show { display: block; }
-    .status-pill.gold { background: rgba(140,100,0,0.85); color: #ffd200; border-color: rgba(255,200,0,0.3); }
-    .status-pill.calibrated { background: rgba(20,100,40,0.85); color: #4cff82; border-color: rgba(76,255,130,0.3); }
+    .pill.show { opacity: 1; transform: translateY(0); }
+    .pill.gold  { background: rgba(110,80,0,0.88); color: #ffd200; border-color: rgba(255,200,0,0.28); }
+    .pill.green { background: rgba(10,80,35,0.88); color: #50ff8c; border-color: rgba(80,255,140,0.28); }
 
-    /* ── Scale indicator ─────────────────────────── */
-    #scale-indicator {
+    /* ── Select hint ─────────────────────────────── */
+    #select-hint {
       position: fixed;
-      left: 12px;
-      bottom: 180px;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      z-index: 50;
-    }
-    #scale-indicator.show { display: flex; }
-    #scale-indicator-label {
+      left: 50%; bottom: 220px;
+      transform: translateX(-50%);
       color: rgba(255,255,255,0.4);
-      font-size: 9px;
-      writing-mode: vertical-rl;
-      transform: rotate(180deg);
-      letter-spacing: 1px;
+      font-size: 13px; text-align: center;
+      pointer-events: none; z-index: 5; display: none;
     }
-    #scale-track {
-      width: 28px; height: 120px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.12);
-      position: relative;
-      overflow: hidden;
-    }
-    #scale-fill {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      background: rgba(255,193,7,0.45);
-      border-radius: 14px;
-      pointer-events: none;
-    }
-    #scale-thumb-vert {
-      position: absolute;
-      left: 50%; width: 20px; height: 20px;
-      background: #ffc107;
-      border-radius: 50%;
-      transform: translateX(-50%) translateY(50%);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-      pointer-events: none;
-    }
+    #select-hint.show { display: block; }
 
-    /* ── Bottom panel ─────────────────────────────── */
+    /* ── Bottom panel ────────────────────────────── */
     #bottom-panel {
       position: fixed;
       bottom: 0; left: 0; right: 0;
-      background: rgba(0,0,0,0.88);
+      background: rgba(0,0,0,0.92);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       z-index: 50;
       padding-bottom: env(safe-area-inset-bottom, 8px);
       border-top: 1px solid rgba(255,255,255,0.07);
-      transition: transform 0.3s;
+      transition: transform 0.3s ease;
+    }
+    #bottom-panel.hidden-panel {
+      transform: translateY(calc(100% - 36px));
     }
 
-    #panel-drag-handle {
+    /* Drag handle — doubles as toggle */
+    #panel-handle {
+      width: 100%;
+      padding: 10px 0 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      gap: 8px;
+    }
+    #handle-bar {
       width: 40px; height: 4px;
       background: rgba(255,255,255,0.2);
       border-radius: 2px;
-      margin: 10px auto 8px;
+    }
+    #handle-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.25);
+      letter-spacing: 1px;
+      text-transform: uppercase;
     }
 
-    /* Scale row */
+    /* Scale slider */
     #scale-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 0 16px 8px;
+      padding: 0 14px 8px;
     }
-    #scale-row label { color: rgba(255,255,255,0.45); font-size: 11px; white-space: nowrap; }
+    #scale-row label { color: rgba(255,255,255,0.38); font-size: 11px; white-space: nowrap; }
     #scale-slider {
       flex: 1;
       -webkit-appearance: none;
-      appearance: none;
       height: 4px;
       background: rgba(255,255,255,0.18);
       border-radius: 2px;
@@ -280,7 +327,7 @@
       background: #ffc107;
       border-radius: 50%;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.45);
     }
     #scale-slider::-moz-range-thumb {
       width: 22px; height: 22px;
@@ -288,7 +335,7 @@
       border-radius: 50%;
       cursor: pointer; border: none;
     }
-    #scale-val { color: rgba(255,255,255,0.4); font-size: 10px; width: 54px; text-align: right; white-space: nowrap; }
+    #scale-val { color: rgba(255,255,255,0.32); font-size: 10px; width: 54px; text-align: right; white-space: nowrap; }
 
     /* Category pills */
     #cat-pills {
@@ -297,28 +344,30 @@
       overflow-x: auto;
       padding: 0 14px 8px;
       scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
     }
     #cat-pills::-webkit-scrollbar { display: none; }
-
     .cat-pill {
       flex-shrink: 0;
       padding: 5px 14px;
       border-radius: 16px;
       font-size: 12px;
       cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.18);
-      color: rgba(255,255,255,0.65);
-      background: rgba(255,255,255,0.07);
-      transition: all 0.18s;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.58);
+      background: rgba(255,255,255,0.06);
+      transition: all 0.15s;
       white-space: nowrap;
     }
     .cat-pill.active {
-      background: rgba(255,193,7,0.2);
+      background: rgba(255,193,7,0.18);
       border-color: rgba(255,193,7,0.5);
       color: #ffc107;
     }
-    .cat-pill:active { transform: scale(0.93); }
+    .cat-pill .cat-count {
+      font-size: 10px;
+      opacity: 0.6;
+      margin-left: 3px;
+    }
 
     /* Thumbnails */
     #thumbs-scroll {
@@ -336,226 +385,136 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      cursor: pointer;
       gap: 3px;
-      transition: transform 0.15s;
+      cursor: pointer;
+      transition: transform 0.12s;
     }
-    .thumb-card:active { transform: scale(0.9); }
-
-    .thumb-img-wrap {
-      position: relative;
-      width: 60px;
-      /* height driven by aspect ratio via padding trick */
-    }
-    .thumb-img-wrap img {
-      width: 60px;
-      height: 60px;
+    .thumb-card:active { transform: scale(0.88); }
+    .thumb-card img {
+      width: 60px; height: 60px;
       object-fit: cover;
       border-radius: 6px;
       border: 2px solid transparent;
-      transition: border-color 0.2s;
       display: block;
+      transition: border-color 0.2s;
     }
-    .thumb-card.active .thumb-img-wrap img { border-color: #ffc107; }
-
-    /* size bar: thin strip below thumbnail proportional to real size */
+    .thumb-card.selected img { border-color: #ffc107; }
     .thumb-size-bar {
       height: 3px;
-      background: rgba(255,193,7,0.35);
+      background: rgba(255,193,7,0.3);
       border-radius: 2px;
-      width: 60px;
     }
-
     .thumb-name {
       font-size: 9px;
-      color: rgba(255,255,255,0.5);
+      color: rgba(255,255,255,0.45);
       text-align: center;
-      max-width: 60px;
+      width: 60px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .thumb-dim {
-      font-size: 8px;
-      color: rgba(255,193,7,0.6);
-    }
+    .thumb-dim { font-size: 8px; color: rgba(255,193,7,0.55); }
 
-    /* "no obras" message */
+    /* No obras message */
     #no-obras {
       display: none;
-      padding: 10px 20px;
-      color: rgba(255,255,255,0.3);
-      font-size: 13px;
+      padding: 8px 20px 12px;
+      color: rgba(255,255,255,0.28);
+      font-size: 12px;
     }
     #no-obras.show { display: block; }
 
-    /* ── Loading screen ───────────────────────────── */
+    /* ── Loading / Permission ────────────────────── */
     #loading-screen {
-      position: fixed;
-      inset: 0;
-      background: #000;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 300;
-      gap: 16px;
+      position: fixed; inset: 0; background: #000;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 300; gap: 16px;
     }
     #loading-screen.hidden { display: none; }
     .spinner {
       width: 36px; height: 36px;
-      border: 2px solid rgba(255,193,7,0.2);
+      border: 2px solid rgba(255,193,7,0.15);
       border-top-color: #ffc107;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    #loading-screen p { color: rgba(255,255,255,0.4); font-size: 13px; }
+    #loading-screen p { color: rgba(255,255,255,0.3); font-size: 13px; }
 
-    /* ── Permission screen ──────────────────────── */
     #permission-screen {
-      position: fixed;
-      inset: 0;
-      background: #0a0a0a;
-      display: flex;
+      position: fixed; inset: 0; background: #0a0a0a;
+      display: none;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      text-align: center;
-      padding: 40px 32px;
-      z-index: 200;
+      align-items: center; justify-content: center;
+      color: #fff; text-align: center;
+      padding: 40px 32px; z-index: 200;
     }
-    #permission-screen.hidden { display: none; }
+    #permission-screen.show { display: flex; }
     #permission-screen h1 {
       font-family: 'Times New Roman', serif;
-      font-size: 28px;
-      font-weight: normal;
-      margin-bottom: 6px;
-      color: #ffc107;
+      font-size: 28px; font-weight: normal;
+      color: #ffc107; margin-bottom: 6px;
     }
     .subtitle {
       font-family: 'Times New Roman', serif;
-      font-size: 13px;
-      color: rgba(255,255,255,0.35);
-      margin-bottom: 28px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
+      font-size: 13px; color: rgba(255,255,255,0.3);
+      margin-bottom: 26px; letter-spacing: 2px; text-transform: uppercase;
     }
-    .camera-icon {
+    .cam-icon {
       width: 72px; height: 72px;
-      background: rgba(255,193,7,0.1);
-      border: 2px solid rgba(255,193,7,0.25);
+      background: rgba(255,193,7,0.08);
+      border: 2px solid rgba(255,193,7,0.2);
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 28px;
-      margin: 0 auto 22px;
+      font-size: 28px; margin: 0 auto 22px;
     }
-    #permission-screen p {
-      color: rgba(255,255,255,0.5);
-      font-size: 14px;
-      line-height: 1.7;
-      max-width: 300px;
-      margin-bottom: 28px;
-    }
+    #permission-screen p { color: rgba(255,255,255,0.46); font-size: 14px; line-height: 1.7; max-width: 300px; margin-bottom: 26px; }
     #start-btn {
-      background: #ffc107;
-      color: #000;
-      border: none;
-      padding: 15px 40px;
-      border-radius: 32px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
+      background: #ffc107; color: #000; border: none;
+      padding: 15px 40px; border-radius: 32px;
+      font-size: 16px; font-weight: bold; cursor: pointer;
     }
-    #start-btn:active { opacity: 0.85; transform: scale(0.96); }
-    #err-msg {
-      color: #ff6b6b;
-      font-size: 13px;
-      margin-top: 12px;
-      display: none;
-      max-width: 280px;
-      line-height: 1.5;
-    }
-    .privacy-note {
-      margin-top: 18px;
-      font-size: 11px;
-      color: rgba(255,255,255,0.2);
-    }
+    #err-msg { color: #ff7070; font-size: 13px; margin-top: 12px; display: none; max-width: 280px; line-height: 1.5; }
+    .privacy-note { margin-top: 14px; font-size: 11px; color: rgba(255,255,255,0.16); }
 
-    /* ── Calibration mode overlay ─────────────────── */
-    #calib-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      display: none;
-      cursor: crosshair;
+    /* ── Instructions overlay ────────────────────── */
+    #instr-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: none; align-items: center; justify-content: center;
+      z-index: 160; padding: 20px;
     }
-    #calib-overlay.show { display: block; }
-
-    /* ── Instructions overlay ───────────────────── */
-    #instructions-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.75);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 150;
-      padding: 20px;
-    }
-    #instructions-overlay.show { display: flex; }
-    #instructions-card {
+    #instr-overlay.show { display: flex; }
+    #instr-card {
       background: #111;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 20px;
-      padding: 28px 22px;
-      max-width: 340px;
-      width: 100%;
-      text-align: center;
+      padding: 26px 22px;
+      max-width: 340px; width: 100%; text-align: center;
     }
-    #instructions-card h2 {
+    #instr-card h2 {
       font-family: 'Times New Roman', serif;
-      font-size: 20px;
-      font-weight: normal;
-      color: #ffc107;
-      margin-bottom: 20px;
+      font-size: 20px; font-weight: normal;
+      color: #ffc107; margin-bottom: 18px;
     }
-    .instr-step {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      text-align: left;
-      margin-bottom: 13px;
-    }
-    .instr-num {
-      flex-shrink: 0;
-      width: 24px; height: 24px;
-      background: rgba(255,193,7,0.12);
-      border: 1px solid rgba(255,193,7,0.35);
+    .step { display: flex; align-items: flex-start; gap: 12px; text-align: left; margin-bottom: 12px; }
+    .step-num {
+      flex-shrink: 0; width: 24px; height: 24px;
+      background: rgba(255,193,7,0.1);
+      border: 1px solid rgba(255,193,7,0.3);
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       font-size: 11px; color: #ffc107; font-weight: bold;
     }
-    .instr-text { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5; padding-top: 3px; }
-    #close-instr-btn {
-      background: #ffc107; color: #000;
-      border: none; padding: 12px 32px;
-      border-radius: 24px; font-size: 14px; font-weight: bold;
-      cursor: pointer; margin-top: 8px; width: 100%;
+    .step-text { font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.5; padding-top: 3px; }
+    .step-text strong { color: #ffc107; font-weight: normal; }
+    #close-instr {
+      background: #ffc107; color: #000; border: none;
+      padding: 12px 32px; border-radius: 24px;
+      font-size: 14px; font-weight: bold; cursor: pointer;
+      margin-top: 6px; width: 100%;
     }
-
-    /* ── Select hint ─────────────────────────────── */
-    #select-hint {
-      position: fixed;
-      left: 50%; bottom: 210px;
-      transform: translateX(-50%);
-      color: rgba(255,255,255,0.45);
-      font-size: 13px; text-align: center;
-      pointer-events: none; z-index: 5; display: none;
-      line-height: 1.6;
-    }
-    #select-hint.show { display: block; }
   </style>
 </head>
 <body>
@@ -567,55 +526,67 @@
 </div>
 
 <!-- Permission -->
-<div id="permission-screen" class="hidden">
+<div id="permission-screen">
   <h1>Ver en tu pared</h1>
   <div class="subtitle">Alfredo Ravelo — Acuarelas</div>
-  <div class="camera-icon">📷</div>
-  <p>Coloca cualquier pintura del catálogo en la pared de tu espacio, a escala real, antes de adquirirla.</p>
+  <div class="cam-icon">📷</div>
+  <p>Visualiza cualquier pintura a escala real en tu espacio antes de adquirirla.</p>
   <button id="start-btn">Activar cámara</button>
   <p id="err-msg"></p>
-  <p class="privacy-note">La cámara solo funciona en tu dispositivo. No se graba ni se envía ninguna imagen.</p>
+  <p class="privacy-note">La cámara funciona solo en tu dispositivo. No se graba ni se envía nada.</p>
 </div>
 
 <!-- Camera -->
 <video id="video" autoplay playsinline muted></video>
 
-<!-- A4 reference frame -->
-<div id="a4-ref"><div id="a4-label">Hoja A4 = 21 × 29.7 cm</div></div>
+<!-- Flash -->
+<div id="flash"></div>
 
-<!-- 2-point calibration: invisible overlay + SVG line -->
+<!-- Screenshot canvas (offscreen) -->
+<canvas id="snap-canvas"></canvas>
+
+<!-- A4 calibration frame -->
+<div id="a4-ref">
+  <div id="a4-label">Hoja A4 = 21 × 29.7 cm</div>
+  <div id="a4-tip">Ajusta el slider hasta que este marco coincida<br>con una hoja A4 real colocada en la pared</div>
+</div>
+
+<!-- 2-point calibration -->
 <div id="calib-overlay"></div>
-<svg id="calib-line"><line id="calib-svg-line" stroke="#ffd200" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"/></svg>
+<svg id="calib-svg">
+  <line id="calib-line" stroke="#ffd200" stroke-width="2" stroke-dasharray="6 4" opacity="0.8"/>
+</svg>
 
-<!-- Painting overlay -->
-<div id="painting-wrap">
-  <img id="painting-img" src="" alt="Obra de arte">
-  <div id="painting-dims"></div>
+<!-- Painting -->
+<div id="paint-wrap">
+  <img id="paint-img" src="" alt="" crossorigin="anonymous">
+  <div id="paint-dims"></div>
 </div>
 
-<!-- Status bar -->
-<div id="status-bar">
-  <div class="status-pill" id="pill-calib-mode">Toca dos puntos separados 10 cm en la pared →</div>
-  <div class="status-pill" id="pill-calibrated">✓ Escala calibrada</div>
-  <div class="status-pill" id="pill-info"></div>
-</div>
-
-<!-- Scale indicator (left side, vertical) -->
-<div id="scale-indicator">
-  <div id="scale-indicator-label">ESCALA</div>
-  <div id="scale-track">
-    <div id="scale-fill"></div>
-    <div id="scale-thumb-vert"></div>
+<!-- Screenshot preview -->
+<div id="snap-preview">
+  <img id="snap-preview-img" src="" alt="Preview">
+  <div class="snap-btns">
+    <button class="snap-btn" id="snap-save">⬇ Guardar</button>
+    <button class="snap-btn" id="snap-close">Cerrar</button>
   </div>
+</div>
+
+<!-- Status pills -->
+<div id="status-bar">
+  <div class="pill" id="pill-mode"></div>
+  <div class="pill" id="pill-info"></div>
+  <div class="pill" id="pill-calib"></div>
 </div>
 
 <!-- Top bar -->
 <div id="top-bar">
   <button class="top-btn" id="back-btn">← Galería</button>
   <span id="top-title">AR — Vista en pared</span>
-  <button class="top-btn" id="calib-a4-btn" title="Calibrar con hoja A4">A4</button>
-  <button class="top-btn" id="calib-2pt-btn" title="Calibrar marcando 10 cm en la pared">10cm</button>
-  <button class="top-btn" id="help-btn">?</button>
+  <button class="top-btn" id="btn-a4"   title="Calibrar escala con hoja A4">A4</button>
+  <button class="top-btn" id="btn-2pt"  title="Calibrar marcando 10 cm en la pared">10cm</button>
+  <button class="top-btn" id="btn-snap" title="Tomar foto">📸</button>
+  <button class="top-btn" id="btn-help" title="Instrucciones">?</button>
 </div>
 
 <!-- Select hint -->
@@ -623,7 +594,10 @@
 
 <!-- Bottom panel -->
 <div id="bottom-panel">
-  <div id="panel-drag-handle"></div>
+  <div id="panel-handle">
+    <div id="handle-bar"></div>
+    <div id="handle-label">Catálogo</div>
+  </div>
   <div id="scale-row">
     <label for="scale-slider">Tamaño</label>
     <input type="range" id="scale-slider" min="1" max="100" value="35">
@@ -631,445 +605,548 @@
   </div>
   <div id="cat-pills"></div>
   <div id="thumbs-scroll"></div>
-  <div id="no-obras">No hay obras en esta categoría</div>
+  <div id="no-obras">Sin pinturas en esta categoría</div>
 </div>
 
 <!-- Instructions -->
-<div id="instructions-overlay">
-  <div id="instructions-card">
+<div id="instr-overlay">
+  <div id="instr-card">
     <h2>Cómo funciona</h2>
-    <div class="instr-step"><div class="instr-num">1</div>
-      <div class="instr-text">Elige una pintura del catálogo en la barra inferior — filtra por categoría con las pastillas de colores</div></div>
-    <div class="instr-step"><div class="instr-num">2</div>
-      <div class="instr-text">Arrastra la pintura hacia tu pared. Usa el slider o dos dedos (pinch) para ajustar el tamaño</div></div>
-    <div class="instr-step"><div class="instr-num">3</div>
-      <div class="instr-text"><strong style="color:#ffc107">Calibrar escala real (A4):</strong> presiona "A4" y ajusta el slider hasta que el marco amarillo coincida con una hoja carta colocada en la pared</div></div>
-    <div class="instr-step"><div class="instr-num">4</div>
-      <div class="instr-text"><strong style="color:#ffc107">Calibrar escala real (10 cm):</strong> presiona "10cm", luego toca dos puntos en la pared separados exactamente 10 cm — más preciso que el método A4</div></div>
-    <button id="close-instr-btn">Entendido</button>
+    <div class="step"><div class="step-num">1</div>
+      <div class="step-text">Elige una pintura — arrástrala hacia tu pared. Usa el slider o <strong>pinch con dos dedos</strong> para ajustar el tamaño</div></div>
+    <div class="step"><div class="step-num">2</div>
+      <div class="step-text">Toca la barra inferior para <strong>ocultar/mostrar</strong> el catálogo y ver mejor la pared</div></div>
+    <div class="step"><div class="step-num">3</div>
+      <div class="step-text"><strong>A4 —</strong> coloca una hoja carta en la pared, ajusta el slider hasta que el marco coincida → escala real calibrada</div></div>
+    <div class="step"><div class="step-num">4</div>
+      <div class="step-text"><strong>10cm —</strong> toca dos puntos en la pared separados 10 cm exactos → calibración más precisa</div></div>
+    <div class="step"><div class="step-num">5</div>
+      <div class="step-text"><strong>📸 —</strong> guarda una foto de la pintura en tu pared para compartir</div></div>
+    <button id="close-instr">Entendido</button>
   </div>
 </div>
 
 <script>
-// ════════════════════════════════════════════════════════
-//  CONSTANTS & STATE
-// ════════════════════════════════════════════════════════
-const CALIB_KEY      = 'ar_pxPerCm_v2';
-const SEEN_KEY       = 'ar_seen_v2';
-const A4_W_CM        = 21;
-const A4_H_CM        = 29.7;
-const REF_DIST_CM    = 10; // 2-point calibration reference distance
+// ══════════════════════════════════════════════════════
+//  CONSTANTS
+// ══════════════════════════════════════════════════════
+const CALIB_KEY = 'ar_pxPerCm_v4';
+const SEEN_KEY  = 'ar_seen_v4';
+const A4_W_CM   = 21;
+const A4_H_CM   = 29.7;
+const REF_CM    = 10;
 
-let obras         = [];        // loaded from obras.json
-let filteredObras = [];        // current category
-let currentObra   = null;
-let currentCat    = 'todas';
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let obras        = [];
+let filteredObras = [];
+let currentObra  = null;
+let pxPerCm      = parseFloat(localStorage.getItem(CALIB_KEY)) || 3;
 
-let pxPerCm       = parseFloat(localStorage.getItem(CALIB_KEY)) || 3;
-let isCalibrated  = !!localStorage.getItem(CALIB_KEY);
+// Painting geometry — driven by image natural aspect ratio
+// physicalW = declared width (cm), aspectRatio = naturalWidth/naturalHeight of photo
+let paintAspect  = null;   // naturalWidth / naturalHeight of loaded photo
+let paintPhysW   = 0;      // declared width in cm (reference)
+let paintPhysH   = 0;      // declared height in cm (for display label only)
 
-// Painting position (center point)
-let pos           = { x: 0, y: 0 };
-let isDragging    = false;
-let dragOffset    = { x: 0, y: 0 };
-let isPinching    = false;
-let pinchStart    = { dist: 0, scale: 0 };
+// Painting position (center)
+let pos          = { x: 0, y: 0 };
+let isDragging   = false;
+let dragOffset   = { x: 0, y: 0 };
+let isPinching   = false;
+let pinchStart   = { dist: 0, scale: 0 };
 
-// A4 calibration mode
-let isA4Mode      = false;
+// Calibration
+let isA4Mode     = false;
+let is2PtMode    = false;
+let calibPt1     = null;
+let calibPt2     = null;
+let calibDots    = [];
 
-// 2-point calibration mode
-let is2PtMode     = false;
-let calibPt1      = null;
-let calibPt2      = null;
-let calibDotEls   = [];
+// Panel state
+let panelOpen    = true;
 
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  DOM REFS
-// ════════════════════════════════════════════════════════
-const loadingScreen  = document.getElementById('loading-screen');
-const permScreen     = document.getElementById('permission-screen');
-const video          = document.getElementById('video');
-const paintWrap      = document.getElementById('painting-wrap');
-const paintImg       = document.getElementById('painting-img');
-const paintDims      = document.getElementById('painting-dims');
-const thumbsScroll   = document.getElementById('thumbs-scroll');
-const catPills       = document.getElementById('cat-pills');
-const noObras        = document.getElementById('no-obras');
-const scaleSlider    = document.getElementById('scale-slider');
-const scaleVal       = document.getElementById('scale-val');
-const scaleFill      = document.getElementById('scale-fill');
-const scaleThumbV    = document.getElementById('scale-thumb-vert');
-const scaleIndicator = document.getElementById('scale-indicator');
-const a4Ref          = document.getElementById('a4-ref');
-const calibOverlay   = document.getElementById('calib-overlay');
-const calibLine      = document.getElementById('calib-svg-line');
-const instrOverlay   = document.getElementById('instructions-overlay');
-const selectHint     = document.getElementById('select-hint');
-const pillCalibMode  = document.getElementById('pill-calib-mode');
-const pillCalibrated = document.getElementById('pill-calibrated');
-const pillInfo       = document.getElementById('pill-info');
-const topTitle       = document.getElementById('top-title');
-const calibA4Btn     = document.getElementById('calib-a4-btn');
-const calib2PtBtn    = document.getElementById('calib-2pt-btn');
+// ══════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const loadScreen  = $('loading-screen');
+const permScreen  = $('permission-screen');
+const video       = $('video');
+const paintWrap   = $('paint-wrap');
+const paintImg    = $('paint-img');
+const paintDims   = $('paint-dims');
+const thumbsScroll= $('thumbs-scroll');
+const catPillsEl  = $('cat-pills');
+const scaleSlider = $('scale-slider');
+const scaleVal    = $('scale-val');
+const a4Ref       = $('a4-ref');
+const calibOvl    = $('calib-overlay');
+const calibLine   = $('calib-line');
+const instrOvl    = $('instr-overlay');
+const selectHint  = $('select-hint');
+const snapPreview  = $('snap-preview');
+const snapPrevImg  = $('snap-preview-img');
+const pillMode    = $('pill-mode');
+const pillInfo    = $('pill-info');
+const pillCalib   = $('pill-calib');
+const topTitle    = $('top-title');
+const flash       = $('flash');
+const bottomPanel = $('bottom-panel');
+const handleLabel = $('handle-label');
 
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  LOAD obras.json
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 async function loadObras() {
   try {
-    const res = await fetch('obras.json');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    obras = await res.json();
+    const r = await fetch('obras.json');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    obras = await r.json();
   } catch (e) {
-    // Fallback: small inline set so the page isn't broken if JSON is missing
-    console.warn('obras.json no disponible, usando datos de respaldo:', e.message);
+    console.warn('Fallback inline:', e.message);
     obras = [
-      { id:1,  title:"Sinfonía de Flores",    image:"assets/flores/flores1.jpg",    measures:"110 x 150 cm", category:"flores"  },
-      { id:3,  title:"Ramillete de Alegría",  image:"assets/flores/flores3.jpg",    measures:"50 x 70 cm",   category:"flores"  },
-      { id:14, title:"Mirada de Inocencia",   image:"assets/rostros/rostro1.jpg",   measures:"50 x 70 cm",   category:"rostros" },
+      { id:1,  title:'Sinfonía de Flores',   image:'assets/flores/flores1.jpg',   measures:'110 x 150 cm' },
+      { id:3,  title:'Ramillete de Alegría', image:'assets/flores/flores3.jpg',   measures:'50 x 70 cm'   },
+      { id:14, title:'Mirada de Inocencia',  image:'assets/rostros/rostro1.jpg',  measures:'50 x 70 cm'   },
+      { id:133,title:'El Faro',              image:'assets/paisajes/paisaje6.jpg',measures:'35 x 50 cm'   },
     ];
   }
+  // Attach category inferred from image path
+  obras = obras.map(o => ({ ...o, cat: inferCat(o.image) }));
 
-  // Infer category from image path if not set in JSON
-  obras = obras.map(o => ({
-    ...o,
-    category: o.category || inferCategory(o.image),
-  }));
-
-  loadingScreen.classList.add('hidden');
-  permScreen.classList.remove('hidden');
-
-  buildCategoryPills();
-  filterAndBuildThumbs('todas');
+  loadScreen.classList.add('hidden');
+  permScreen.classList.add('show');
+  buildCatPills();
+  filterThumbs('todas');
 }
 
-function inferCategory(imagePath) {
+function inferCat(path) {
   const MAP = {
-    flores: 'flores', rostros: 'rostros', desnudos: 'desnudos',
-    catrinas: 'catrinas', paisajes: 'paisajes', mexico: 'méxico',
-    expresiones: 'expresión', naturalezamuerta: 'naturaleza muerta',
-    sacro: 'sacro', payasos: 'payasos', celebridades: 'celebridades',
-    manos: 'manos', animales: 'animales',
+    '/flores/'          : 'flores',
+    '/rostros/'         : 'rostros',
+    '/desnudos/'        : 'desnudos',
+    '/catrinas/'        : 'catrinas',
+    '/paisajes/'        : 'paisajes',
+    '/mexico/'          : 'méxico',
+    '/expresiones/'     : 'expresión corporal',
+    '/naturalezamuerta/': 'naturaleza muerta',
+    '/sacro/'           : 'sacro',
+    '/payasos/'         : 'payasos',
+    '/celebridades/'    : 'celebridades',
+    '/manos/'           : 'manos',
+    '/animales/'        : 'animales',
   };
   for (const [key, label] of Object.entries(MAP)) {
-    if (imagePath.includes('/' + key + '/')) return label;
+    if (path.includes(key)) return label;
   }
   return 'otras';
 }
 
-// ════════════════════════════════════════════════════════
-//  CATEGORIES
-// ════════════════════════════════════════════════════════
-function buildCategoryPills() {
-  const cats = ['todas', ...new Set(obras.map(o => o.category))].sort((a, b) =>
-    a === 'todas' ? -1 : b === 'todas' ? 1 : a.localeCompare(b)
-  );
+// ══════════════════════════════════════════════════════
+//  CATEGORY PILLS
+// ══════════════════════════════════════════════════════
+function buildCatPills() {
+  // Count per category
+  const counts = {};
+  obras.forEach(o => { counts[o.cat] = (counts[o.cat] || 0) + 1; });
 
-  catPills.innerHTML = '';
+  const cats = ['todas', ...Object.keys(counts).sort()];
+  catPillsEl.innerHTML = '';
+
   cats.forEach(cat => {
-    const el = document.createElement('div');
+    const n   = cat === 'todas' ? obras.length : counts[cat];
+    const el  = document.createElement('div');
     el.className = 'cat-pill' + (cat === 'todas' ? ' active' : '');
-    el.textContent = cap(cat);
-    el.addEventListener('click', () => {
+    el.innerHTML = `${cap(cat)}<span class="cat-count">${n}</span>`;
+    el.onclick = () => {
       document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
       el.classList.add('active');
-      currentCat = cat;
-      filterAndBuildThumbs(cat);
-    });
-    catPills.appendChild(el);
+      filterThumbs(cat);
+    };
+    catPillsEl.appendChild(el);
   });
 }
 
-function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  THUMBNAILS
-// ════════════════════════════════════════════════════════
-// Max real area to normalize size bar
-let maxArea = 0;
+// ══════════════════════════════════════════════════════
+let maxArea = 1;
 
-function filterAndBuildThumbs(cat) {
-  filteredObras = cat === 'todas' ? obras : obras.filter(o => o.category === cat);
-  maxArea = Math.max(...filteredObras.map(o => {
-    const { w, h } = parseMeasures(o.measures);
-    return w * h;
-  }));
-
+function filterThumbs(cat) {
+  filteredObras = (cat === 'todas') ? [...obras] : obras.filter(o => o.cat === cat);
+  $('no-obras').classList.toggle('show', filteredObras.length === 0);
   thumbsScroll.innerHTML = '';
-  noObras.classList.toggle('show', filteredObras.length === 0);
+
+  if (filteredObras.length === 0) return;
+
+  // Compute maxArea for size bars
+  maxArea = filteredObras.reduce((mx, o) => {
+    const { w, h } = parseMeasures(o.measures);
+    return Math.max(mx, w * h);
+  }, 1);
+
+  const BLANK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='%23222'/%3E%3C/svg%3E";
 
   filteredObras.forEach(obra => {
     const { w, h } = parseMeasures(obra.measures);
-    const area   = w * h;
-    const barPct = Math.max(15, Math.round((area / maxArea) * 100));
+    const barPct   = Math.max(10, Math.round((w * h / maxArea) * 100));
+    const isActive = currentObra && currentObra.id === obra.id;
 
     const el = document.createElement('div');
-    el.className = 'thumb-card';
+    el.className = 'thumb-card' + (isActive ? ' selected' : '');
     el.dataset.id = obra.id;
-    if (currentObra && obra.id === currentObra.id) el.classList.add('active');
-
-    const PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='%23222'/%3E%3C/svg%3E`;
     el.innerHTML = `
-      <div class="thumb-img-wrap">
-        <img src="${obra.image}" alt="${obra.title}" loading="lazy"
-          onerror="this.src='${PLACEHOLDER}'">
-      </div>
+      <img src="${obra.image}" loading="lazy" alt="${obra.title}"
+           onerror="this.onerror=null;this.src='${BLANK}'">
       <div class="thumb-size-bar" style="width:${barPct}%"></div>
       <div class="thumb-name">${obra.title}</div>
       <div class="thumb-dim">${w}×${h} cm</div>
     `;
-    el.addEventListener('click', () => selectObra(obra, el));
+    el.onclick = () => selectObra(obra, el);
     thumbsScroll.appendChild(el);
   });
 }
 
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  SELECT OBRA
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function selectObra(obra, thumbEl) {
   currentObra = obra;
-  selectHint.classList.remove('show');
+  const { w, h } = parseMeasures(obra.measures);
+  paintPhysW = w;
+  paintPhysH = h;
+  paintAspect = null;  // reset; will be set when image loads
 
-  document.querySelectorAll('.thumb-card').forEach(c => c.classList.remove('active'));
-  thumbEl.classList.add('active');
+  // Update selected state in thumbnails
+  document.querySelectorAll('.thumb-card').forEach(c => c.classList.remove('selected'));
+  thumbEl.classList.add('selected');
 
-  paintImg.src  = obra.image;
-  paintImg.alt  = obra.title;
+  // Load image — get natural aspect ratio on load
+  paintImg.onload = () => {
+    paintAspect = paintImg.naturalWidth / paintImg.naturalHeight;
+    applyTransform();
+    paintWrap.classList.add('visible');
+  };
+  paintImg.onerror = () => {
+    // Fallback: use declared ratio
+    paintAspect = w / h;
+    applyTransform();
+    paintWrap.classList.add('visible');
+  };
+  paintImg.src = obra.image;
+
   topTitle.textContent = obra.title;
+  selectHint.classList.remove('show');
+  showInfo(`${obra.title} — ${w} × ${h} cm`, 2800);
 
-  const panelH = document.getElementById('bottom-panel').offsetHeight + 30;
+  // Center painting in viewport above bottom panel
+  const panelH = bottomPanel.offsetHeight + 30;
   pos.x = window.innerWidth / 2;
   pos.y = (window.innerHeight - panelH) / 2;
 
-  applyTransform();
-  paintWrap.classList.add('visible');
-  scaleIndicator.classList.add('show');
-  updateScaleUI();
-  showInfo(`${obra.title} — ${obra.measures}`, 3000);
+  // Auto-collapse panel so user can see the wall
+  collapsePanel();
 }
 
-// ════════════════════════════════════════════════════════
-//  TRANSFORM
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+//  TRANSFORM — proportional scaling
+//  Reference: declared WIDTH (cm) → pixel width
+//  Height: pixel width / image natural aspect ratio
+//  This respects real physical width while honoring photo orientation
+// ══════════════════════════════════════════════════════
 function parseMeasures(m) {
-  const n = m.match(/\d+/g).map(Number);
-  return { w: n[0], h: n[1] };
+  const nums = m.match(/\d+/g);
+  if (!nums || nums.length < 2) return { w: 50, h: 70 };
+  return { w: parseInt(nums[0]), h: parseInt(nums[1]) };
 }
 
 function applyTransform() {
-  if (!currentObra) return;
-  const { w, h } = parseMeasures(currentObra.measures);
-  const pw = w * pxPerCm;
-  const ph = h * pxPerCm;
+  if (!currentObra || paintAspect === null) return;
+
+  const pw = paintPhysW * pxPerCm;        // pixel width = declared cm * px/cm
+  const ph = pw / paintAspect;             // pixel height from real photo aspect ratio
+
   paintWrap.style.width  = pw + 'px';
   paintWrap.style.height = ph + 'px';
   paintWrap.style.left   = (pos.x - pw / 2) + 'px';
   paintWrap.style.top    = (pos.y - ph / 2) + 'px';
-  paintDims.textContent  = `${w} × ${h} cm`;
-  if (isA4Mode) positionA4();
+
+  // Badge shows DECLARED measures (what the artwork actually measures)
+  paintDims.textContent = `${paintPhysW} × ${paintPhysH} cm`;
 }
 
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  SCALE SLIDER
-// ════════════════════════════════════════════════════════
-function sliderToPx(v)  { const t = v / 100; return 0.3 + t * t * 10.7; }
-function pxToSlider(p)  { return Math.round(Math.sqrt((p - 0.3) / 10.7) * 100); }
+// ══════════════════════════════════════════════════════
+function sliderToPx(v)  { const t = v / 100; return 0.3 + t * t * 11.7; }
+function pxToSlider(p)  { return Math.max(1, Math.min(100, Math.round(Math.sqrt((p - 0.3) / 11.7) * 100))); }
 
-function updateScaleUI() {
-  const v = +scaleSlider.value;
-  const pct = v + '%';
-  scaleFill.style.height  = pct;
-  scaleThumbV.style.bottom = pct;
-  // label: show approximate cm scale at 96dpi
-  const approx = (pxPerCm * 2.54 / 96).toFixed(2);
-  scaleVal.textContent = `${pxPerCm.toFixed(1)} px/cm`;
+function syncSlider() {
+  scaleSlider.value = pxToSlider(pxPerCm);
+  scaleVal.textContent = pxPerCm.toFixed(1) + ' px/cm';
 }
 
 scaleSlider.addEventListener('input', () => {
   pxPerCm = sliderToPx(+scaleSlider.value);
-  updateScaleUI();
+  scaleVal.textContent = pxPerCm.toFixed(1) + ' px/cm';
   applyTransform();
-  if (is2PtMode) redraw2PtLine();
+  if (isA4Mode) positionA4();
 });
 
-// Sync slider from external pxPerCm change (pinch / 2-pt calib)
-function syncSlider() {
-  const v = Math.max(1, Math.min(100, pxToSlider(pxPerCm)));
-  scaleSlider.value = v;
-  updateScaleUI();
-}
-
-// Init
 syncSlider();
 
-// ════════════════════════════════════════════════════════
-//  A4 CALIBRATION MODE
-// ════════════════════════════════════════════════════════
-function positionA4() {
-  const rw = A4_W_CM * pxPerCm;
-  const rh = A4_H_CM * pxPerCm;
-  const panelH = document.getElementById('bottom-panel').offsetHeight + 20;
-  const cx = window.innerWidth / 2;
-  const cy = (window.innerHeight - panelH) / 2;
-  a4Ref.style.cssText = `display:block;width:${rw}px;height:${rh}px;left:${cx - rw/2}px;top:${cy - rh/2}px;`;
+// ══════════════════════════════════════════════════════
+//  PANEL TOGGLE
+// ══════════════════════════════════════════════════════
+function collapsePanel() {
+  panelOpen = false;
+  bottomPanel.classList.add('hidden-panel');
+  handleLabel.textContent = '▲ Catálogo';
+}
+function expandPanel() {
+  panelOpen = true;
+  bottomPanel.classList.remove('hidden-panel');
+  handleLabel.textContent = 'Catálogo';
 }
 
-calibA4Btn.addEventListener('click', () => {
-  if (is2PtMode) end2PtMode();
+$('panel-handle').addEventListener('click', () => {
+  panelOpen ? collapsePanel() : expandPanel();
+});
+
+// ══════════════════════════════════════════════════════
+//  A4 CALIBRATION
+//  During A4 mode: painting is HIDDEN, only A4 frame shown.
+//  User matches frame to physical A4 → pxPerCm is saved.
+//  On exit: painting reappears at correct scale.
+// ══════════════════════════════════════════════════════
+$('btn-a4').addEventListener('click', () => {
+  if (is2PtMode) end2Pt();
   isA4Mode = !isA4Mode;
+  $('btn-a4').classList.toggle('lit', isA4Mode);
 
   if (isA4Mode) {
-    calibA4Btn.classList.add('active-yellow');
-    calibA4Btn.textContent = '✓ A4';
+    // Hide painting, show only A4 frame
+    paintWrap.style.opacity = '0';
+    a4Ref.classList.add('show');
     positionA4();
-    pillCalibMode.textContent = 'Ajusta el slider hasta que el marco coincida con una hoja A4 en la pared';
-    pillCalibMode.classList.add('show', 'gold');
+    showPill(pillMode, 'Ajusta el slider hasta que el marco amarillo coincida con la hoja A4', 0);
   } else {
-    endA4Mode();
+    // End calibration: save and show painting at calibrated scale
+    a4Ref.classList.remove('show');
+    paintWrap.style.opacity = '';
+    pillMode.classList.remove('show');
+    saveCalib();
+    applyTransform();  // ← FIX: actually update painting size with new pxPerCm
   }
 });
 
-function endA4Mode() {
-  isA4Mode = false;
-  calibA4Btn.classList.remove('active-yellow');
-  calibA4Btn.textContent = 'A4';
-  a4Ref.style.display = 'none';
-  pillCalibMode.classList.remove('show', 'gold');
-  saveCalib();
+function positionA4() {
+  const rw     = A4_W_CM * pxPerCm;
+  const rh     = A4_H_CM * pxPerCm;
+  const panelH = panelOpen ? bottomPanel.offsetHeight + 20 : 60;
+  const cx     = window.innerWidth / 2;
+  const cy     = (window.innerHeight - panelH) / 2;
+  a4Ref.style.width  = rw + 'px';
+  a4Ref.style.height = rh + 'px';
+  a4Ref.style.left   = (cx - rw / 2) + 'px';
+  a4Ref.style.top    = (cy - rh / 2) + 'px';
 }
 
-// ════════════════════════════════════════════════════════
-//  2-POINT CALIBRATION MODE
-// ════════════════════════════════════════════════════════
-calib2PtBtn.addEventListener('click', () => {
-  if (isA4Mode) endA4Mode();
-  if (is2PtMode) { end2PtMode(); return; }
-  start2PtMode();
+// ══════════════════════════════════════════════════════
+//  2-POINT CALIBRATION
+// ══════════════════════════════════════════════════════
+$('btn-2pt').addEventListener('click', () => {
+  if (isA4Mode) $('btn-a4').click();
+  is2PtMode ? end2Pt() : start2Pt();
 });
 
-function start2PtMode() {
+function start2Pt() {
   is2PtMode = true;
   calibPt1 = calibPt2 = null;
-  clear2PtDots();
-  calib2PtBtn.classList.add('active-yellow');
-  calib2PtBtn.textContent = '✕ 10cm';
-  calibOverlay.classList.add('show');
-  pillCalibMode.textContent = 'Toca el punto 1 en la pared (luego toca otro punto a exactamente 10 cm)';
-  pillCalibMode.classList.add('show', 'gold');
-  calibLine.setAttribute('x1', 0); calibLine.setAttribute('x2', 0);
-  calibLine.setAttribute('y1', 0); calibLine.setAttribute('y2', 0);
+  clearDots();
+  calibOvl.classList.add('show');
+  $('btn-2pt').classList.add('lit');
+  $('btn-2pt').textContent = '✕ 10cm';
+  clearLine();
+  showPill(pillMode, 'Toca el punto 1 en la pared', 0);
 }
 
-function end2PtMode() {
+function end2Pt() {
   is2PtMode = false;
   calibPt1 = calibPt2 = null;
-  clear2PtDots();
-  calibOverlay.classList.remove('show');
-  calib2PtBtn.classList.remove('active-yellow');
-  calib2PtBtn.textContent = '10cm';
-  pillCalibMode.classList.remove('show', 'gold');
+  clearDots();
+  calibOvl.classList.remove('show');
+  $('btn-2pt').classList.remove('lit');
+  $('btn-2pt').textContent = '10cm';
+  pillMode.classList.remove('show');
+  clearLine();
+}
+
+function clearLine() {
   calibLine.setAttribute('x1', 0); calibLine.setAttribute('x2', 0);
   calibLine.setAttribute('y1', 0); calibLine.setAttribute('y2', 0);
 }
 
-function clear2PtDots() {
-  calibDotEls.forEach(d => d.remove());
-  calibDotEls = [];
-}
+function clearDots() { calibDots.forEach(d => d.remove()); calibDots = []; }
 
 function placeDot(x, y) {
   const d = document.createElement('div');
-  d.className = 'calib-tap';
+  d.className = 'calib-dot';
   d.style.left = x + 'px';
   d.style.top  = y + 'px';
   document.body.appendChild(d);
-  calibDotEls.push(d);
-  return d;
-}
-
-function redraw2PtLine() {
-  if (calibPt1 && calibPt2) {
-    calibLine.setAttribute('x1', calibPt1.x); calibLine.setAttribute('y1', calibPt1.y);
-    calibLine.setAttribute('x2', calibPt2.x); calibLine.setAttribute('y2', calibPt2.y);
-  }
+  calibDots.push(d);
 }
 
 function onCalibTap(x, y) {
   if (!calibPt1) {
     calibPt1 = { x, y };
     placeDot(x, y);
-    pillCalibMode.textContent = 'Ahora toca el segundo punto (a 10 cm del primero)';
-  } else if (!calibPt2) {
+    showPill(pillMode, 'Ahora toca el punto 2 (a 10 cm exactos del primero)', 0);
+  } else {
     calibPt2 = { x, y };
     placeDot(x, y);
-    redraw2PtLine();
+    calibLine.setAttribute('x1', calibPt1.x); calibLine.setAttribute('y1', calibPt1.y);
+    calibLine.setAttribute('x2', calibPt2.x); calibLine.setAttribute('y2', calibPt2.y);
 
-    // Calculate px per cm
-    const dx = calibPt2.x - calibPt1.x;
-    const dy = calibPt2.y - calibPt1.y;
-    const pxDist = Math.hypot(dx, dy);
-    pxPerCm = pxDist / REF_DIST_CM;
-
+    const pxDist = Math.hypot(calibPt2.x - calibPt1.x, calibPt2.y - calibPt1.y);
+    pxPerCm      = pxDist / REF_CM;
     syncSlider();
-    applyTransform();
+    applyTransform();  // update painting immediately
     saveCalib();
-
-    pillCalibMode.classList.remove('show', 'gold');
-    showCalibratedBadge();
-
-    // Close mode after brief delay
-    setTimeout(end2PtMode, 1200);
+    showPill(pillCalib, '✓ Calibración guardada', 2500, 'green');
+    setTimeout(end2Pt, 1400);
   }
 }
 
-// Tap events on calibration overlay
-calibOverlay.addEventListener('click', e => { onCalibTap(e.clientX, e.clientY); });
-calibOverlay.addEventListener('touchend', e => {
+calibOvl.addEventListener('click',    e => onCalibTap(e.clientX, e.clientY));
+calibOvl.addEventListener('touchend', e => {
   e.preventDefault();
   const t = e.changedTouches[0];
   onCalibTap(t.clientX, t.clientY);
 }, { passive: false });
 
-// ════════════════════════════════════════════════════════
-//  SAVE / RESTORE CALIBRATION
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+//  SCREENSHOT — canvas compositing (no html2canvas)
+//  Draws video frame then painting on top manually.
+// ══════════════════════════════════════════════════════
+$('btn-snap').addEventListener('click', async () => {
+  if (!currentObra || !paintWrap.classList.contains('visible')) {
+    showInfo('Selecciona una pintura primero', 2000);
+    return;
+  }
+
+  // Flash
+  flash.classList.add('on');
+  setTimeout(() => flash.classList.remove('on'), 180);
+
+  try {
+    const dpr    = window.devicePixelRatio || 1;
+    const W      = window.innerWidth;
+    const H      = window.innerHeight;
+    const canvas = $('snap-canvas');
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    const ctx    = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    // 1. Draw the live video frame
+    ctx.drawImage(video, 0, 0, W, H);
+
+    // 2. Draw the painting at its current position/size
+    const rect   = paintWrap.getBoundingClientRect();
+    const pw     = rect.width;
+    const ph     = rect.height;
+    const px     = rect.left;
+    const py     = rect.top;
+    const FRAME  = 10;   // same as ::before inset
+    const MAT    = 3;    // same as ::after inset
+
+    // Shadow
+    ctx.shadowColor   = 'rgba(0,0,0,0.65)';
+    ctx.shadowBlur    = 28;
+    ctx.shadowOffsetY = 10;
+
+    // Outer dark frame
+    ctx.fillStyle = '#1a1208';
+    ctx.fillRect(px - FRAME, py - FRAME, pw + FRAME * 2, ph + FRAME * 2);
+
+    // Reset shadow before mat/image
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur  = 0;
+    ctx.shadowOffsetY = 0;
+
+    // Cream mat
+    ctx.fillStyle = '#ece8df';
+    ctx.fillRect(px - MAT, py - MAT, pw + MAT * 2, ph + MAT * 2);
+
+    // Painting image — create a fresh image element to avoid taint
+    await new Promise((resolve, reject) => {
+      const img    = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload  = () => { ctx.drawImage(img, px, py, pw, ph); resolve(); };
+      img.onerror = () => {
+        // If crossOrigin fails, try without (will taint canvas but still capture)
+        const img2   = new Image();
+        img2.onload  = () => { try { ctx.drawImage(img2, px, py, pw, ph); } catch(e){} resolve(); };
+        img2.onerror = resolve;
+        img2.src     = paintImg.src;
+      };
+      img.src = paintImg.src + (paintImg.src.includes('?') ? '&' : '?') + '_nc=' + Date.now();
+    });
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    snapPrevImg.src = dataUrl;
+    snapPreview.classList.add('show');
+
+  } catch (err) {
+    showInfo('Error al capturar: ' + err.message, 3000);
+    console.error(err);
+  }
+});
+
+$('snap-save').addEventListener('click', () => {
+  const name = currentObra ? currentObra.title.replace(/\s+/g, '_') : 'obra';
+  const a    = document.createElement('a');
+  a.href     = snapPrevImg.src;
+  a.download = `Ravelo_${name}.jpg`;
+  a.click();
+});
+$('snap-close').addEventListener('click', () => snapPreview.classList.remove('show'));
+
+// ══════════════════════════════════════════════════════
+//  SAVE CALIBRATION
+// ══════════════════════════════════════════════════════
 function saveCalib() {
   localStorage.setItem(CALIB_KEY, pxPerCm);
-  isCalibrated = true;
-  showCalibratedBadge();
 }
 
-function showCalibratedBadge() {
-  pillCalibrated.classList.add('show', 'calibrated');
-  clearTimeout(pillCalibrated._t);
-  pillCalibrated._t = setTimeout(() => pillCalibrated.classList.remove('show', 'calibrated'), 2500);
+// ══════════════════════════════════════════════════════
+//  STATUS PILLS
+// ══════════════════════════════════════════════════════
+function showPill(el, msg, ms, cls) {
+  el.textContent = msg;
+  el.className   = 'pill show' + (cls ? ' ' + cls : '');
+  clearTimeout(el._t);
+  if (ms > 0) el._t = setTimeout(() => el.classList.remove('show'), ms);
 }
+function showInfo(msg, ms) { showPill(pillInfo, msg, ms); }
 
-// ════════════════════════════════════════════════════════
-//  STATUS INFO PILL
-// ════════════════════════════════════════════════════════
-function showInfo(msg, ms = 2500) {
-  pillInfo.textContent = msg;
-  pillInfo.classList.add('show');
-  clearTimeout(pillInfo._t);
-  pillInfo._t = setTimeout(() => pillInfo.classList.remove('show'), ms);
-}
-
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  DRAG — TOUCH
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 paintWrap.addEventListener('touchstart', e => {
   e.preventDefault();
   if (e.touches.length === 1) {
-    isDragging = true; isPinching = false;
-    const t = e.touches[0];
-    dragOffset = { x: t.clientX - pos.x, y: t.clientY - pos.y };
+    isDragging  = true; isPinching = false;
+    const t     = e.touches[0];
+    dragOffset  = { x: t.clientX - pos.x, y: t.clientY - pos.y };
     paintWrap.classList.add('dragging');
   } else if (e.touches.length === 2) {
-    isDragging = false; isPinching = true;
-    pinchStart.dist  = touchDist(e.touches);
-    pinchStart.scale = pxPerCm;
+    isDragging  = false; isPinching = true;
+    pinchStart  = { dist: touchDist(e.touches), scale: pxPerCm };
   }
 }, { passive: false });
 
@@ -1081,8 +1158,10 @@ paintWrap.addEventListener('touchmove', e => {
     applyTransform();
   } else if (isPinching && e.touches.length === 2) {
     const ratio = touchDist(e.touches) / pinchStart.dist;
-    pxPerCm = Math.max(0.2, Math.min(14, pinchStart.scale * ratio));
-    syncSlider(); applyTransform();
+    pxPerCm     = Math.max(0.2, Math.min(15, pinchStart.scale * ratio));
+    syncSlider();
+    applyTransform();
+    if (isA4Mode) positionA4();
   }
 }, { passive: false });
 
@@ -1096,9 +1175,9 @@ paintWrap.addEventListener('touchend', e => {
   }
 });
 
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  DRAG — MOUSE
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 paintWrap.addEventListener('mousedown', e => {
   isDragging = true;
   dragOffset = { x: e.clientX - pos.x, y: e.clientY - pos.y };
@@ -1119,66 +1198,65 @@ window.addEventListener('mouseup', () => {
 window.addEventListener('wheel', e => {
   if (!currentObra) return;
   e.preventDefault();
-  const factor = e.deltaY > 0 ? 0.95 : 1.05;
-  pxPerCm = Math.max(0.2, Math.min(14, pxPerCm * factor));
-  syncSlider(); applyTransform();
+  pxPerCm = Math.max(0.2, Math.min(15, pxPerCm * (e.deltaY > 0 ? 0.95 : 1.05)));
+  syncSlider();
+  applyTransform();
   if (isA4Mode) positionA4();
 }, { passive: false });
 
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  HELPERS
-// ════════════════════════════════════════════════════════
-function touchDist(touches) {
-  const dx = touches[0].clientX - touches[1].clientX;
-  const dy = touches[0].clientY - touches[1].clientY;
-  return Math.hypot(dx, dy);
-}
+// ══════════════════════════════════════════════════════
+function touchDist(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
+function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
 
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  CAMERA
-// ════════════════════════════════════════════════════════
-document.getElementById('start-btn').addEventListener('click', async () => {
+// ══════════════════════════════════════════════════════
+$('start-btn').addEventListener('click', async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+      video: {
+        facingMode: { ideal: 'environment' },
+        width:  { ideal: 1920 },
+        height: { ideal: 1080 }
+      }
     });
     video.srcObject = stream;
-    permScreen.classList.add('hidden');
+    permScreen.classList.remove('show');
 
     if (!localStorage.getItem(SEEN_KEY)) {
-      instrOverlay.classList.add('show');
+      instrOvl.classList.add('show');
     } else {
       selectHint.classList.add('show');
     }
 
-    // Restore last calibration badge if exists
-    if (isCalibrated) {
-      showInfo('Escala restaurada de sesión anterior');
+    if (localStorage.getItem(CALIB_KEY)) {
+      showInfo('Escala restaurada — puedes recalibrar con A4 o 10cm', 3000);
     }
   } catch (err) {
-    const el = document.getElementById('err-msg');
+    const el = $('err-msg');
     el.style.display = 'block';
-    el.textContent = err.name === 'NotAllowedError'
-      ? 'Acceso a cámara denegado. Ve a Configuración → Camera → Permitir para este sitio.'
-      : err.name === 'NotFoundError'
-        ? 'No se encontró cámara en este dispositivo.'
-        : 'No se pudo acceder a la cámara: ' + err.message;
+    el.textContent =
+      err.name === 'NotAllowedError' ? 'Acceso denegado. Habilita el permiso de cámara en la configuración de tu navegador.' :
+      err.name === 'NotFoundError'   ? 'No se encontró cámara en este dispositivo.' :
+                                       'Error al acceder a la cámara: ' + err.message;
   }
 });
 
-document.getElementById('close-instr-btn').addEventListener('click', () => {
-  instrOverlay.classList.remove('show');
+$('close-instr').addEventListener('click', () => {
+  instrOvl.classList.remove('show');
   localStorage.setItem(SEEN_KEY, '1');
   selectHint.classList.add('show');
 });
-document.getElementById('help-btn').addEventListener('click', () => instrOverlay.classList.add('show'));
-document.getElementById('back-btn').addEventListener('click', () => window.location.href = 'index.html');
+$('btn-help').addEventListener('click', () => instrOvl.classList.add('show'));
+$('back-btn').addEventListener('click', () => window.location.href = 'index.html');
 
-window.addEventListener('resize', () => { applyTransform(); });
+window.addEventListener('resize', () => { applyTransform(); if (isA4Mode) positionA4(); });
 
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  BOOT
-// ════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 loadObras();
 </script>
 </body>
