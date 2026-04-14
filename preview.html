@@ -4,13 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>AR Preview — Alfredo Ravelo</title>
+
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       background: #000;
       overflow: hidden;
-      font-family: Arial, sans-serif;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
       touch-action: none;
       -webkit-user-select: none;
       user-select: none;
@@ -19,8 +20,7 @@
 
     /* ── Camera ─────────────────────────────────── */
     #video {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       width: 100%; height: 100%;
       object-fit: cover;
     }
@@ -32,489 +32,450 @@
       cursor: grab;
       touch-action: none;
       z-index: 10;
-      /* Dark/black modern frame */
     }
     #paint-wrap.visible  { display: block; }
     #paint-wrap.dragging { cursor: grabbing; }
 
-    /* Dark wood frame via pseudo-elements */
+    /* Dark wood frame — black/dark brown, elegant */
     #paint-wrap::before {
       content: '';
       position: absolute;
-      inset: -10px;
-      background: linear-gradient(145deg, #2a2218 0%, #111008 45%, #1e1810 100%);
+      inset: -11px;
+      background: linear-gradient(150deg, #252018 0%, #0d0b06 50%, #1a1710 100%);
       border-radius: 2px;
       box-shadow:
-        2px 2px 0 #080604,
-        -1px -1px 0 #3a3020,
-        0 14px 44px rgba(0,0,0,0.75),
-        0 4px 14px rgba(0,0,0,0.6),
-        inset 0 1px 0 rgba(255,220,120,0.06);
+        0 16px 48px rgba(0,0,0,0.8),
+        0 4px 16px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        2px 2px 0 #050400,
+        -1px -1px 0 #2e2820;
       z-index: -1;
     }
-    /* Thin cream mat between frame and image */
+    /* Thin cream mat */
     #paint-wrap::after {
       content: '';
       position: absolute;
       inset: -3px;
-      background: #ece8df;
+      background: #eceae4;
       z-index: -1;
-      box-shadow: inset 0 0 8px rgba(0,0,0,0.2);
     }
 
     #paint-img {
       display: block;
       width: 100%; height: 100%;
-      object-fit: fill;   /* intentional: size is already set to correct aspect */
+      object-fit: fill;
       pointer-events: none;
     }
 
-    /* Dims badge (shows on drag/hover) */
+    /* Dims badge */
     #paint-dims {
       position: absolute;
-      bottom: -34px;
-      left: 50%;
+      bottom: -34px; left: 50%;
       transform: translateX(-50%);
-      background: rgba(0,0,0,0.78);
-      color: #ffc107;
+      background: rgba(0,0,0,0.8);
+      color: rgba(255,255,255,0.85);
       font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 0.5px;
       padding: 4px 12px;
       border-radius: 12px;
       white-space: nowrap;
       pointer-events: none;
-      border: 1px solid rgba(255,193,7,0.22);
+      border: 1px solid rgba(255,255,255,0.12);
       opacity: 0;
       transition: opacity 0.2s;
     }
     #paint-wrap:hover #paint-dims,
     #paint-wrap.dragging #paint-dims { opacity: 1; }
 
-    /* ── A4 reference frame ─────────────────────── */
+    /* ── A4 reference frame ──────────────────────── */
     #a4-ref {
-      position: fixed;
-      display: none;
-      border: 2px dashed rgba(255,210,0,0.9);
-      z-index: 20;
-      pointer-events: none;
+      position: fixed; display: none;
+      border: 1.5px solid rgba(255,255,255,0.8);
+      z-index: 20; pointer-events: none;
     }
     #a4-ref.show { display: block; }
     #a4-label {
       position: absolute;
-      bottom: calc(100% + 6px);
-      left: 50%;
+      bottom: calc(100% + 6px); left: 50%;
       transform: translateX(-50%);
-      color: rgba(255,210,0,0.95);
-      font-size: 11px;
+      color: rgba(255,255,255,0.8);
+      font-size: 11px; font-weight: 300;
       white-space: nowrap;
-      background: rgba(0,0,0,0.7);
-      padding: 3px 12px;
-      border-radius: 12px;
+      background: rgba(0,0,0,0.75);
+      padding: 3px 12px; border-radius: 12px;
+      letter-spacing: 0.3px;
     }
     #a4-tip {
       position: absolute;
-      top: calc(100% + 6px);
-      left: 50%;
+      top: calc(100% + 6px); left: 50%;
       transform: translateX(-50%);
-      color: rgba(255,210,0,0.7);
-      font-size: 10px;
-      white-space: nowrap;
-      text-align: center;
+      color: rgba(255,255,255,0.45);
+      font-size: 10px; font-weight: 300;
+      white-space: nowrap; text-align: center;
+      line-height: 1.5;
     }
+    /* Corner markers for A4 frame */
+    #a4-ref::before, #a4-ref::after {
+      content: '';
+      position: absolute;
+      width: 10px; height: 10px;
+      border-color: rgba(255,255,255,0.9);
+      border-style: solid;
+    }
+    #a4-ref::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    #a4-ref::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
 
-    /* ── 2-point calibration ────────────────────── */
+    /* ── 2-point calibration ─────────────────────── */
     .calib-dot {
-      position: fixed;
-      width: 26px; height: 26px;
-      border: 2px solid #ffd200;
+      position: fixed; width: 22px; height: 22px;
+      border: 1.5px solid rgba(255,255,255,0.9);
       border-radius: 50%;
       transform: translate(-50%,-50%);
-      z-index: 30;
-      pointer-events: none;
+      z-index: 30; pointer-events: none;
     }
     .calib-dot::after {
       content: '';
-      position: absolute;
-      inset: 5px;
-      background: #ffd200;
+      position: absolute; inset: 4px;
+      background: rgba(255,255,255,0.85);
       border-radius: 50%;
     }
-    #calib-svg {
-      position: fixed; inset: 0;
-      width: 100%; height: 100%;
-      z-index: 29; pointer-events: none;
-    }
-    #calib-overlay {
-      position: fixed; inset: 0;
-      z-index: 28; display: none; cursor: crosshair;
-    }
+    #calib-svg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 29; pointer-events: none; }
+    #calib-overlay { position: fixed; inset: 0; z-index: 28; display: none; cursor: crosshair; }
     #calib-overlay.show { display: block; }
 
-    /* ── Screenshot canvas (hidden) ─────────────── */
+    /* ── Screenshot ──────────────────────────────── */
     #snap-canvas { display: none; }
-
-    /* Flash effect */
     #flash {
       position: fixed; inset: 0;
-      background: #fff;
-      opacity: 0; pointer-events: none;
-      z-index: 200;
-      transition: opacity 0.06s;
+      background: #fff; opacity: 0; pointer-events: none;
+      z-index: 200; transition: opacity 0.06s;
     }
     #flash.on { opacity: 0.9; }
-
-    /* Screenshot preview */
     #snap-preview {
       position: fixed; inset: 0;
-      background: rgba(0,0,0,0.92);
-      display: none;
-      flex-direction: column;
+      background: rgba(0,0,0,0.93);
+      display: none; flex-direction: column;
       align-items: center; justify-content: center;
       z-index: 180; gap: 16px; padding: 24px;
     }
     #snap-preview.show { display: flex; }
     #snap-preview-img {
-      max-width: 100%; max-height: 58vh;
-      object-fit: contain; border-radius: 8px;
+      max-width: 100%; max-height: 60vh;
+      object-fit: contain; border-radius: 6px;
       box-shadow: 0 8px 40px rgba(0,0,0,0.7);
     }
     .snap-btns { display: flex; gap: 12px; }
     .snap-btn {
-      padding: 12px 28px; border-radius: 24px;
-      font-size: 14px; font-weight: bold;
+      padding: 12px 28px; border-radius: 2px;
+      font-size: 13px; font-weight: 400;
       cursor: pointer; border: none;
+      letter-spacing: 1px; text-transform: uppercase;
     }
-    #snap-save  { background: #ffc107; color: #000; }
-    #snap-close { background: rgba(255,255,255,0.13); color: #fff; }
+    #snap-save  { background: #fff; color: #000; }
+    #snap-close { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.15); }
 
     /* ── Top bar ─────────────────────────────────── */
     #top-bar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
+      position: fixed; top: 0; left: 0; right: 0;
       height: 56px;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.85), transparent);
-      display: flex;
-      align-items: center;
-      padding: 0 10px;
-      gap: 6px;
-      z-index: 50;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.75), transparent);
+      display: flex; align-items: center;
+      padding: 0 14px; gap: 8px; z-index: 50;
     }
     .top-btn {
-      background: rgba(255,255,255,0.12);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,0.13);
-      color: #fff;
-      padding: 7px 13px;
-      border-radius: 20px;
-      font-size: 12px;
-      cursor: pointer;
-      white-space: nowrap;
+      background: rgba(255,255,255,0.09);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.75);
+      padding: 7px 14px; border-radius: 2px;
+      font-size: 11px; font-weight: 300;
+      cursor: pointer; white-space: nowrap;
       flex-shrink: 0;
-      transition: background 0.15s;
+      letter-spacing: 1px; text-transform: uppercase;
+      transition: background 0.15s, color 0.15s;
     }
-    .top-btn:active { background: rgba(255,255,255,0.28); }
+    .top-btn:active { background: rgba(255,255,255,0.22); color: #fff; }
     .top-btn.lit {
-      background: rgba(255,193,7,0.28);
-      border-color: rgba(255,193,7,0.55);
-      color: #ffd860;
+      background: rgba(255,255,255,0.16);
+      border-color: rgba(255,255,255,0.4);
+      color: #fff;
     }
     #top-title {
       flex: 1;
-      color: rgba(255,255,255,0.72);
-      font-family: 'Times New Roman', serif;
-      font-size: 14px;
+      color: rgba(255,255,255,0.6);
+      font-size: 12px; font-weight: 300;
       text-align: center;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      min-width: 0;
+      overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; min-width: 0;
+      letter-spacing: 2px; text-transform: uppercase;
     }
 
     /* ── Status pills ────────────────────────────── */
     #status-bar {
-      position: fixed;
-      top: 62px; left: 50%;
+      position: fixed; top: 62px; left: 50%;
       transform: translateX(-50%);
       z-index: 50; pointer-events: none;
-      display: flex; flex-direction: column;
-      align-items: center; gap: 5px;
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
     }
     .pill {
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(8px);
-      color: #fff;
-      padding: 5px 16px;
-      border-radius: 20px;
-      font-size: 12px;
+      background: rgba(0,0,0,0.78);
+      backdrop-filter: blur(10px);
+      color: rgba(255,255,255,0.8);
+      padding: 5px 18px; border-radius: 2px;
+      font-size: 11px; font-weight: 300;
       white-space: nowrap;
       border: 1px solid rgba(255,255,255,0.1);
-      opacity: 0;
-      transform: translateY(-4px);
+      letter-spacing: 0.3px;
+      opacity: 0; transform: translateY(-4px);
       transition: opacity 0.22s, transform 0.22s;
     }
-    .pill.show { opacity: 1; transform: translateY(0); }
-    .pill.gold  { background: rgba(110,80,0,0.88); color: #ffd200; border-color: rgba(255,200,0,0.28); }
-    .pill.green { background: rgba(10,80,35,0.88); color: #50ff8c; border-color: rgba(80,255,140,0.28); }
+    .pill.show  { opacity: 1; transform: translateY(0); }
+    .pill.dim   { background: rgba(10,10,10,0.88); color: rgba(255,255,255,0.5); }
+    .pill.bright{ background: rgba(20,20,20,0.9);  color: rgba(255,255,255,0.9); border-color: rgba(255,255,255,0.25); }
 
     /* ── Select hint ─────────────────────────────── */
     #select-hint {
-      position: fixed;
-      left: 50%; bottom: 220px;
+      position: fixed; left: 50%; bottom: 80px;
       transform: translateX(-50%);
-      color: rgba(255,255,255,0.4);
-      font-size: 13px; text-align: center;
-      pointer-events: none; z-index: 5; display: none;
+      color: rgba(255,255,255,0.3);
+      font-size: 11px; font-weight: 300;
+      letter-spacing: 2px; text-transform: uppercase;
+      text-align: center; pointer-events: none; z-index: 5; display: none;
     }
     #select-hint.show { display: block; }
 
     /* ── Bottom panel ────────────────────────────── */
     #bottom-panel {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      background: rgba(0,0,0,0.92);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.94);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
       z-index: 50;
       padding-bottom: env(safe-area-inset-bottom, 8px);
-      border-top: 1px solid rgba(255,255,255,0.07);
-      transition: transform 0.3s ease;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      transition: transform 0.35s cubic-bezier(.4,0,.2,1);
     }
-    #bottom-panel.hidden-panel {
-      transform: translateY(calc(100% - 36px));
+    /* Collapsed: only the handle bar is visible (~52px) */
+    #bottom-panel.collapsed {
+      transform: translateY(calc(100% - 52px));
     }
 
-    /* Drag handle — doubles as toggle */
+    /* Handle */
     #panel-handle {
-      width: 100%;
-      padding: 10px 0 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      gap: 8px;
+      height: 52px; width: 100%;
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; cursor: pointer; flex-shrink: 0;
     }
     #handle-bar {
-      width: 40px; height: 4px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 2px;
+      width: 36px; height: 3px;
+      background: rgba(255,255,255,0.18); border-radius: 2px;
     }
     #handle-label {
-      font-size: 10px;
-      color: rgba(255,255,255,0.25);
-      letter-spacing: 1px;
-      text-transform: uppercase;
+      font-size: 10px; font-weight: 300;
+      color: rgba(255,255,255,0.22);
+      letter-spacing: 2px; text-transform: uppercase;
     }
+    /* Arrow indicator */
+    #handle-arrow {
+      font-size: 10px;
+      color: rgba(255,255,255,0.2);
+      transition: transform 0.3s;
+    }
+    #bottom-panel.collapsed #handle-arrow { transform: rotate(180deg); }
 
     /* Scale slider */
     #scale-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 0 14px 8px;
+      display: flex; align-items: center;
+      gap: 10px; padding: 0 16px 10px;
     }
-    #scale-row label { color: rgba(255,255,255,0.38); font-size: 11px; white-space: nowrap; }
+    #scale-row label {
+      color: rgba(255,255,255,0.3); font-size: 10px;
+      font-weight: 300; white-space: nowrap;
+      letter-spacing: 1.5px; text-transform: uppercase;
+    }
     #scale-slider {
-      flex: 1;
-      -webkit-appearance: none;
-      height: 4px;
-      background: rgba(255,255,255,0.18);
-      border-radius: 2px;
-      outline: none;
+      flex: 1; -webkit-appearance: none;
+      height: 1px; background: rgba(255,255,255,0.15);
+      border-radius: 1px; outline: none;
     }
     #scale-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 22px; height: 22px;
-      background: #ffc107;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.45);
+      width: 20px; height: 20px;
+      background: #fff;
+      border-radius: 50%; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
     #scale-slider::-moz-range-thumb {
-      width: 22px; height: 22px;
-      background: #ffc107;
-      border-radius: 50%;
+      width: 20px; height: 20px;
+      background: #fff; border-radius: 50%;
       cursor: pointer; border: none;
     }
-    #scale-val { color: rgba(255,255,255,0.32); font-size: 10px; width: 54px; text-align: right; white-space: nowrap; }
+    #scale-val {
+      color: rgba(255,255,255,0.25); font-size: 10px;
+      width: 52px; text-align: right; white-space: nowrap; font-weight: 300;
+    }
 
     /* Category pills */
     #cat-pills {
-      display: flex;
-      gap: 7px;
-      overflow-x: auto;
-      padding: 0 14px 8px;
+      display: flex; gap: 6px;
+      overflow-x: auto; padding: 0 16px 10px;
       scrollbar-width: none;
     }
     #cat-pills::-webkit-scrollbar { display: none; }
     .cat-pill {
-      flex-shrink: 0;
-      padding: 5px 14px;
-      border-radius: 16px;
-      font-size: 12px;
-      cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.15);
-      color: rgba(255,255,255,0.58);
-      background: rgba(255,255,255,0.06);
+      flex-shrink: 0; padding: 5px 14px;
+      border-radius: 2px; font-size: 11px;
+      cursor: pointer; font-weight: 300;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.04);
       transition: all 0.15s;
-      white-space: nowrap;
+      white-space: nowrap; letter-spacing: 0.5px;
     }
     .cat-pill.active {
-      background: rgba(255,193,7,0.18);
-      border-color: rgba(255,193,7,0.5);
-      color: #ffc107;
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.35);
+      color: rgba(255,255,255,0.9);
     }
-    .cat-pill .cat-count {
-      font-size: 10px;
-      opacity: 0.6;
-      margin-left: 3px;
-    }
+    .cat-count { font-size: 9px; opacity: 0.5; margin-left: 4px; }
 
     /* Thumbnails */
     #thumbs-scroll {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding: 0 14px 10px;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
+      display: flex; gap: 8px;
+      overflow-x: auto; padding: 0 16px 10px;
+      scrollbar-width: none; -webkit-overflow-scrolling: touch;
     }
     #thumbs-scroll::-webkit-scrollbar { display: none; }
-
     .thumb-card {
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      cursor: pointer;
-      transition: transform 0.12s;
+      flex-shrink: 0; display: flex; flex-direction: column;
+      align-items: center; gap: 4px; cursor: pointer;
+      transition: opacity 0.12s;
     }
-    .thumb-card:active { transform: scale(0.88); }
+    .thumb-card:active { opacity: 0.6; }
     .thumb-card img {
-      width: 60px; height: 60px;
-      object-fit: cover;
-      border-radius: 6px;
-      border: 2px solid transparent;
-      display: block;
-      transition: border-color 0.2s;
-    }
-    .thumb-card.selected img { border-color: #ffc107; }
-    .thumb-size-bar {
-      height: 3px;
-      background: rgba(255,193,7,0.3);
+      width: 60px; height: 60px; object-fit: cover;
       border-radius: 2px;
+      border: 1px solid rgba(255,255,255,0.08);
+      display: block; transition: border-color 0.2s;
     }
+    .thumb-card.selected img { border-color: rgba(255,255,255,0.6); }
+    .thumb-size-bar { height: 1px; background: rgba(255,255,255,0.2); border-radius: 1px; }
     .thumb-name {
-      font-size: 9px;
-      color: rgba(255,255,255,0.45);
-      text-align: center;
-      width: 60px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      font-size: 9px; color: rgba(255,255,255,0.35);
+      text-align: center; width: 60px;
+      overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; font-weight: 300;
     }
-    .thumb-dim { font-size: 8px; color: rgba(255,193,7,0.55); }
+    .thumb-dim { font-size: 8px; color: rgba(255,255,255,0.22); letter-spacing: 0.3px; }
 
-    /* No obras message */
-    #no-obras {
-      display: none;
-      padding: 8px 20px 12px;
-      color: rgba(255,255,255,0.28);
-      font-size: 12px;
-    }
+    #no-obras { display: none; padding: 8px 20px 12px; color: rgba(255,255,255,0.2); font-size: 11px; font-weight: 300; }
     #no-obras.show { display: block; }
 
-    /* ── Loading / Permission ────────────────────── */
+    /* ── Loading & Permission ─────────────────────── */
     #loading-screen {
       position: fixed; inset: 0; background: #000;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      z-index: 300; gap: 16px;
+      z-index: 300; gap: 20px;
     }
     #loading-screen.hidden { display: none; }
     .spinner {
-      width: 36px; height: 36px;
-      border: 2px solid rgba(255,193,7,0.15);
-      border-top-color: #ffc107;
+      width: 32px; height: 32px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-top-color: rgba(255,255,255,0.6);
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    #loading-screen p { color: rgba(255,255,255,0.3); font-size: 13px; }
+    #loading-screen p { color: rgba(255,255,255,0.25); font-size: 11px; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; }
 
     #permission-screen {
-      position: fixed; inset: 0; background: #0a0a0a;
-      display: none;
-      flex-direction: column;
+      position: fixed; inset: 0; background: #080808;
+      display: none; flex-direction: column;
       align-items: center; justify-content: center;
       color: #fff; text-align: center;
-      padding: 40px 32px; z-index: 200;
+      padding: 48px 40px; z-index: 200;
     }
     #permission-screen.show { display: flex; }
+
+    /* Minimalist SVG camera icon */
+    .cam-icon-wrap {
+      width: 64px; height: 64px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 50%;
+      margin: 0 auto 28px;
+    }
+
     #permission-screen h1 {
-      font-family: 'Times New Roman', serif;
-      font-size: 28px; font-weight: normal;
-      color: #ffc107; margin-bottom: 6px;
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 26px; font-weight: normal;
+      color: #fff; margin-bottom: 6px;
+      letter-spacing: 1px;
     }
     .subtitle {
-      font-family: 'Times New Roman', serif;
-      font-size: 13px; color: rgba(255,255,255,0.3);
-      margin-bottom: 26px; letter-spacing: 2px; text-transform: uppercase;
+      font-size: 10px; font-weight: 300;
+      color: rgba(255,255,255,0.25);
+      margin-bottom: 32px; letter-spacing: 4px; text-transform: uppercase;
     }
-    .cam-icon {
-      width: 72px; height: 72px;
-      background: rgba(255,193,7,0.08);
-      border: 2px solid rgba(255,193,7,0.2);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 28px; margin: 0 auto 22px;
+    #permission-screen p {
+      color: rgba(255,255,255,0.4); font-size: 14px;
+      font-weight: 300; line-height: 1.8;
+      max-width: 280px; margin-bottom: 32px;
     }
-    #permission-screen p { color: rgba(255,255,255,0.46); font-size: 14px; line-height: 1.7; max-width: 300px; margin-bottom: 26px; }
     #start-btn {
-      background: #ffc107; color: #000; border: none;
-      padding: 15px 40px; border-radius: 32px;
-      font-size: 16px; font-weight: bold; cursor: pointer;
+      background: transparent; color: rgba(255,255,255,0.8);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 14px 44px; border-radius: 2px;
+      font-size: 11px; font-weight: 300;
+      letter-spacing: 3px; text-transform: uppercase;
+      cursor: pointer; transition: all 0.2s;
     }
-    #err-msg { color: #ff7070; font-size: 13px; margin-top: 12px; display: none; max-width: 280px; line-height: 1.5; }
-    .privacy-note { margin-top: 14px; font-size: 11px; color: rgba(255,255,255,0.16); }
+    #start-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.6); color: #fff; }
+    #err-msg { color: rgba(255,100,100,0.8); font-size: 12px; margin-top: 14px; display: none; max-width: 280px; line-height: 1.6; font-weight: 300; }
+    .privacy-note { margin-top: 20px; font-size: 10px; color: rgba(255,255,255,0.12); letter-spacing: 0.5px; }
 
-    /* ── Instructions overlay ────────────────────── */
+    /* ── Instructions ─────────────────────────────── */
     #instr-overlay {
       position: fixed; inset: 0;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.85);
       display: none; align-items: center; justify-content: center;
       z-index: 160; padding: 20px;
     }
     #instr-overlay.show { display: flex; }
     #instr-card {
-      background: #111;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 20px;
-      padding: 26px 22px;
-      max-width: 340px; width: 100%; text-align: center;
+      background: #0e0e0e;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 4px;
+      padding: 32px 24px;
+      max-width: 340px; width: 100%;
     }
     #instr-card h2 {
-      font-family: 'Times New Roman', serif;
-      font-size: 20px; font-weight: normal;
-      color: #ffc107; margin-bottom: 18px;
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 18px; font-weight: normal;
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 22px; letter-spacing: 1px;
     }
-    .step { display: flex; align-items: flex-start; gap: 12px; text-align: left; margin-bottom: 12px; }
+    .step { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 14px; }
     .step-num {
-      flex-shrink: 0; width: 24px; height: 24px;
-      background: rgba(255,193,7,0.1);
-      border: 1px solid rgba(255,193,7,0.3);
+      flex-shrink: 0; width: 22px; height: 22px;
+      border: 1px solid rgba(255,255,255,0.15);
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 11px; color: #ffc107; font-weight: bold;
+      font-size: 10px; color: rgba(255,255,255,0.4); font-weight: 300;
     }
-    .step-text { font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.5; padding-top: 3px; }
-    .step-text strong { color: #ffc107; font-weight: normal; }
+    .step-text { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.6; padding-top: 2px; font-weight: 300; }
+    .step-text strong { color: rgba(255,255,255,0.8); font-weight: 400; }
     #close-instr {
-      background: #ffc107; color: #000; border: none;
-      padding: 12px 32px; border-radius: 24px;
-      font-size: 14px; font-weight: bold; cursor: pointer;
-      margin-top: 6px; width: 100%;
+      background: transparent; color: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.18); padding: 12px 32px;
+      border-radius: 2px; font-size: 11px; font-weight: 300;
+      letter-spacing: 2px; text-transform: uppercase;
+      cursor: pointer; margin-top: 10px; width: 100%;
+      transition: all 0.2s;
     }
+    #close-instr:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
   </style>
 </head>
 <body>
@@ -522,18 +483,25 @@
 <!-- Loading -->
 <div id="loading-screen">
   <div class="spinner"></div>
-  <p>Cargando catálogo...</p>
+  <p>Cargando catálogo</p>
 </div>
 
 <!-- Permission -->
 <div id="permission-screen">
   <h1>Ver en tu pared</h1>
-  <div class="subtitle">Alfredo Ravelo — Acuarelas</div>
-  <div class="cam-icon">📷</div>
+  <div class="subtitle">Alfredo Ravelo</div>
+  <!-- Minimalist SVG camera icon -->
+  <div class="cam-icon-wrap">
+    <svg width="28" height="24" viewBox="0 0 28 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1 7C1 5.9 1.9 5 3 5h2.4L7 2h14l1.6 3H25c1.1 0 2 .9 2 2v13c0 1.1-.9 2-2 2H3c-1.1 0-2-.9-2-2V7z"/>
+      <circle cx="14" cy="13" r="4"/>
+      <circle cx="14" cy="13" r="1.5" fill="rgba(255,255,255,0.3)" stroke="none"/>
+    </svg>
+  </div>
   <p>Visualiza cualquier pintura a escala real en tu espacio antes de adquirirla.</p>
   <button id="start-btn">Activar cámara</button>
   <p id="err-msg"></p>
-  <p class="privacy-note">La cámara funciona solo en tu dispositivo. No se graba ni se envía nada.</p>
+  <p class="privacy-note">La cámara funciona solo en tu dispositivo. No se graba ni transmite nada.</p>
 </div>
 
 <!-- Camera -->
@@ -542,19 +510,19 @@
 <!-- Flash -->
 <div id="flash"></div>
 
-<!-- Screenshot canvas (offscreen) -->
+<!-- Screenshot canvas -->
 <canvas id="snap-canvas"></canvas>
 
 <!-- A4 calibration frame -->
 <div id="a4-ref">
-  <div id="a4-label">Hoja A4 = 21 × 29.7 cm</div>
+  <div id="a4-label">A4 = 21 × 29.7 cm</div>
   <div id="a4-tip">Ajusta el slider hasta que este marco coincida<br>con una hoja A4 real colocada en la pared</div>
 </div>
 
 <!-- 2-point calibration -->
 <div id="calib-overlay"></div>
 <svg id="calib-svg">
-  <line id="calib-line" stroke="#ffd200" stroke-width="2" stroke-dasharray="6 4" opacity="0.8"/>
+  <line id="calib-line" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-dasharray="5 4"/>
 </svg>
 
 <!-- Painting -->
@@ -567,7 +535,7 @@
 <div id="snap-preview">
   <img id="snap-preview-img" src="" alt="Preview">
   <div class="snap-btns">
-    <button class="snap-btn" id="snap-save">⬇ Guardar</button>
+    <button class="snap-btn" id="snap-save">Guardar</button>
     <button class="snap-btn" id="snap-close">Cerrar</button>
   </div>
 </div>
@@ -582,24 +550,31 @@
 <!-- Top bar -->
 <div id="top-bar">
   <button class="top-btn" id="back-btn">← Galería</button>
-  <span id="top-title">AR — Vista en pared</span>
-  <button class="top-btn" id="btn-a4"   title="Calibrar escala con hoja A4">A4</button>
-  <button class="top-btn" id="btn-2pt"  title="Calibrar marcando 10 cm en la pared">10cm</button>
-  <button class="top-btn" id="btn-snap" title="Tomar foto">📸</button>
-  <button class="top-btn" id="btn-help" title="Instrucciones">?</button>
+  <span id="top-title">Vista en pared</span>
+  <button class="top-btn" id="btn-a4"   title="Calibrar con hoja A4">A4</button>
+  <button class="top-btn" id="btn-2pt"  title="Calibrar tocando 10 cm">10cm</button>
+  <button class="top-btn" id="btn-snap" title="Fotografiar">
+    <!-- Minimalist camera icon in button -->
+    <svg width="16" height="14" viewBox="0 0 28 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="display:block">
+      <path d="M1 7C1 5.9 1.9 5 3 5h2.4L7 2h14l1.6 3H25c1.1 0 2 .9 2 2v13c0 1.1-.9 2-2 2H3c-1.1 0-2-.9-2-2V7z"/>
+      <circle cx="14" cy="13" r="4"/>
+    </svg>
+  </button>
+  <button class="top-btn" id="btn-help">?</button>
 </div>
 
 <!-- Select hint -->
-<div id="select-hint">↓ Elige una pintura del catálogo</div>
+<div id="select-hint">↓ elige una pintura</div>
 
 <!-- Bottom panel -->
 <div id="bottom-panel">
   <div id="panel-handle">
     <div id="handle-bar"></div>
     <div id="handle-label">Catálogo</div>
+    <div id="handle-arrow">▼</div>
   </div>
   <div id="scale-row">
-    <label for="scale-slider">Tamaño</label>
+    <label for="scale-slider">Escala</label>
     <input type="range" id="scale-slider" min="1" max="100" value="35">
     <span id="scale-val">—</span>
   </div>
@@ -613,15 +588,15 @@
   <div id="instr-card">
     <h2>Cómo funciona</h2>
     <div class="step"><div class="step-num">1</div>
-      <div class="step-text">Elige una pintura — arrástrala hacia tu pared. Usa el slider o <strong>pinch con dos dedos</strong> para ajustar el tamaño</div></div>
+      <div class="step-text">Elige una pintura — arrástrala hacia la pared. Usa el slider o <strong>pinch con dos dedos</strong> para escalar</div></div>
     <div class="step"><div class="step-num">2</div>
-      <div class="step-text">Toca la barra inferior para <strong>ocultar/mostrar</strong> el catálogo y ver mejor la pared</div></div>
+      <div class="step-text">Toca la barra inferior para <strong>ocultar o mostrar</strong> el catálogo</div></div>
     <div class="step"><div class="step-num">3</div>
       <div class="step-text"><strong>A4 —</strong> coloca una hoja carta en la pared, ajusta el slider hasta que el marco coincida → escala real calibrada</div></div>
     <div class="step"><div class="step-num">4</div>
-      <div class="step-text"><strong>10cm —</strong> toca dos puntos en la pared separados 10 cm exactos → calibración más precisa</div></div>
+      <div class="step-text"><strong>10cm —</strong> toca dos puntos en la pared separados exactamente 10 cm → calibración precisa</div></div>
     <div class="step"><div class="step-num">5</div>
-      <div class="step-text"><strong>📸 —</strong> guarda una foto de la pintura en tu pared para compartir</div></div>
+      <div class="step-text">Ícono de cámara → guarda una foto de la pintura en tu pared</div></div>
     <button id="close-instr">Entendido</button>
   </div>
 </div>
@@ -630,8 +605,8 @@
 // ══════════════════════════════════════════════════════
 //  CONSTANTS
 // ══════════════════════════════════════════════════════
-const CALIB_KEY = 'ar_pxPerCm_v4';
-const SEEN_KEY  = 'ar_seen_v4';
+const CALIB_KEY = 'ar_pxPerCm_v5';
+const SEEN_KEY  = 'ar_seen_v5';
 const A4_W_CM   = 21;
 const A4_H_CM   = 29.7;
 const REF_CM    = 10;
@@ -639,62 +614,56 @@ const REF_CM    = 10;
 // ══════════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════════
-let obras        = [];
-let filteredObras = [];
-let currentObra  = null;
-let pxPerCm      = parseFloat(localStorage.getItem(CALIB_KEY)) || 3;
+let obras         = [];
+let currentObra   = null;
+let pxPerCm       = parseFloat(localStorage.getItem(CALIB_KEY)) || 3;
 
-// Painting geometry — driven by image natural aspect ratio
-// physicalW = declared width (cm), aspectRatio = naturalWidth/naturalHeight of photo
-let paintAspect  = null;   // naturalWidth / naturalHeight of loaded photo
-let paintPhysW   = 0;      // declared width in cm (reference)
-let paintPhysH   = 0;      // declared height in cm (for display label only)
+let paintAspect   = null;  // actual pixel aspect ratio used for rendering
+let paintPhysW    = 0;     // declared width (cm) — reference for scale
+let paintPhysH    = 0;     // declared height (cm) — for display label only
 
-// Painting position (center)
-let pos          = { x: 0, y: 0 };
-let isDragging   = false;
-let dragOffset   = { x: 0, y: 0 };
-let isPinching   = false;
-let pinchStart   = { dist: 0, scale: 0 };
+let pos           = { x: 0, y: 0 };
+let isDragging    = false;
+let dragOffset    = { x: 0, y: 0 };
+let isPinching    = false;
+let pinchStart    = { dist: 0, scale: 0 };
 
-// Calibration
-let isA4Mode     = false;
-let is2PtMode    = false;
-let calibPt1     = null;
-let calibPt2     = null;
-let calibDots    = [];
+let isA4Mode      = false;
+let is2PtMode     = false;
+let calibPt1      = null;
+let calibPt2      = null;
+let calibDots     = [];
 
-// Panel state
-let panelOpen    = true;
+let panelOpen     = true;
 
 // ══════════════════════════════════════════════════════
 //  DOM REFS
 // ══════════════════════════════════════════════════════
 const $ = id => document.getElementById(id);
-const loadScreen  = $('loading-screen');
-const permScreen  = $('permission-screen');
-const video       = $('video');
-const paintWrap   = $('paint-wrap');
-const paintImg    = $('paint-img');
-const paintDims   = $('paint-dims');
-const thumbsScroll= $('thumbs-scroll');
-const catPillsEl  = $('cat-pills');
-const scaleSlider = $('scale-slider');
-const scaleVal    = $('scale-val');
-const a4Ref       = $('a4-ref');
-const calibOvl    = $('calib-overlay');
-const calibLine   = $('calib-line');
-const instrOvl    = $('instr-overlay');
-const selectHint  = $('select-hint');
+const loadScreen   = $('loading-screen');
+const permScreen   = $('permission-screen');
+const video        = $('video');
+const paintWrap    = $('paint-wrap');
+const paintImg     = $('paint-img');
+const paintDims    = $('paint-dims');
+const thumbsScroll = $('thumbs-scroll');
+const catPillsEl   = $('cat-pills');
+const scaleSlider  = $('scale-slider');
+const scaleVal     = $('scale-val');
+const a4Ref        = $('a4-ref');
+const calibOvl     = $('calib-overlay');
+const calibLine    = $('calib-line');
+const instrOvl     = $('instr-overlay');
+const selectHint   = $('select-hint');
 const snapPreview  = $('snap-preview');
 const snapPrevImg  = $('snap-preview-img');
-const pillMode    = $('pill-mode');
-const pillInfo    = $('pill-info');
-const pillCalib   = $('pill-calib');
-const topTitle    = $('top-title');
-const flash       = $('flash');
-const bottomPanel = $('bottom-panel');
-const handleLabel = $('handle-label');
+const pillMode     = $('pill-mode');
+const pillInfo     = $('pill-info');
+const pillCalib    = $('pill-calib');
+const topTitle     = $('top-title');
+const flash        = $('flash');
+const bottomPanel  = $('bottom-panel');
+const handleLabel  = $('handle-label');
 
 // ══════════════════════════════════════════════════════
 //  LOAD obras.json
@@ -705,17 +674,14 @@ async function loadObras() {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     obras = await r.json();
   } catch (e) {
-    console.warn('Fallback inline:', e.message);
+    console.warn('Fallback data:', e.message);
     obras = [
       { id:1,  title:'Sinfonía de Flores',   image:'assets/flores/flores1.jpg',   measures:'110 x 150 cm' },
       { id:3,  title:'Ramillete de Alegría', image:'assets/flores/flores3.jpg',   measures:'50 x 70 cm'   },
       { id:14, title:'Mirada de Inocencia',  image:'assets/rostros/rostro1.jpg',  measures:'50 x 70 cm'   },
-      { id:133,title:'El Faro',              image:'assets/paisajes/paisaje6.jpg',measures:'35 x 50 cm'   },
     ];
   }
-  // Attach category inferred from image path
   obras = obras.map(o => ({ ...o, cat: inferCat(o.image) }));
-
   loadScreen.classList.add('hidden');
   permScreen.classList.add('show');
   buildCatPills();
@@ -745,19 +711,16 @@ function inferCat(path) {
 }
 
 // ══════════════════════════════════════════════════════
-//  CATEGORY PILLS
+//  CATEGORIES
 // ══════════════════════════════════════════════════════
 function buildCatPills() {
-  // Count per category
   const counts = {};
   obras.forEach(o => { counts[o.cat] = (counts[o.cat] || 0) + 1; });
-
   const cats = ['todas', ...Object.keys(counts).sort()];
   catPillsEl.innerHTML = '';
-
   cats.forEach(cat => {
-    const n   = cat === 'todas' ? obras.length : counts[cat];
-    const el  = document.createElement('div');
+    const n  = cat === 'todas' ? obras.length : counts[cat];
+    const el = document.createElement('div');
     el.className = 'cat-pill' + (cat === 'todas' ? ' active' : '');
     el.innerHTML = `${cap(cat)}<span class="cat-count">${n}</span>`;
     el.onclick = () => {
@@ -772,35 +735,29 @@ function buildCatPills() {
 // ══════════════════════════════════════════════════════
 //  THUMBNAILS
 // ══════════════════════════════════════════════════════
-let maxArea = 1;
-
 function filterThumbs(cat) {
-  filteredObras = (cat === 'todas') ? [...obras] : obras.filter(o => o.cat === cat);
-  $('no-obras').classList.toggle('show', filteredObras.length === 0);
+  const list = cat === 'todas' ? [...obras] : obras.filter(o => o.cat === cat);
+  $('no-obras').classList.toggle('show', list.length === 0);
   thumbsScroll.innerHTML = '';
+  if (!list.length) return;
 
-  if (filteredObras.length === 0) return;
-
-  // Compute maxArea for size bars
-  maxArea = filteredObras.reduce((mx, o) => {
-    const { w, h } = parseMeasures(o.measures);
+  const maxArea = list.reduce((mx, o) => {
+    const { w, h } = pm(o.measures);
     return Math.max(mx, w * h);
   }, 1);
 
-  const BLANK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='%23222'/%3E%3C/svg%3E";
+  const BLANK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='%23111'/%3E%3C/svg%3E";
 
-  filteredObras.forEach(obra => {
-    const { w, h } = parseMeasures(obra.measures);
-    const barPct   = Math.max(10, Math.round((w * h / maxArea) * 100));
-    const isActive = currentObra && currentObra.id === obra.id;
-
-    const el = document.createElement('div');
-    el.className = 'thumb-card' + (isActive ? ' selected' : '');
-    el.dataset.id = obra.id;
-    el.innerHTML = `
+  list.forEach(obra => {
+    const { w, h } = pm(obra.measures);
+    const barW     = Math.max(8, Math.round((w * h / maxArea) * 100));
+    const el       = document.createElement('div');
+    el.className   = 'thumb-card' + (currentObra?.id === obra.id ? ' selected' : '');
+    el.dataset.id  = obra.id;
+    el.innerHTML   = `
       <img src="${obra.image}" loading="lazy" alt="${obra.title}"
            onerror="this.onerror=null;this.src='${BLANK}'">
-      <div class="thumb-size-bar" style="width:${barPct}%"></div>
+      <div class="thumb-size-bar" style="width:${barW}%"></div>
       <div class="thumb-name">${obra.title}</div>
       <div class="thumb-dim">${w}×${h} cm</div>
     `;
@@ -813,88 +770,104 @@ function filterThumbs(cat) {
 //  SELECT OBRA
 // ══════════════════════════════════════════════════════
 function selectObra(obra, thumbEl) {
-  currentObra = obra;
-  const { w, h } = parseMeasures(obra.measures);
-  paintPhysW = w;
-  paintPhysH = h;
-  paintAspect = null;  // reset; will be set when image loads
+  currentObra   = obra;
+  const { w, h } = pm(obra.measures);
+  paintPhysW    = w;
+  paintPhysH    = h;
+  paintAspect   = null;
 
-  // Update selected state in thumbnails
   document.querySelectorAll('.thumb-card').forEach(c => c.classList.remove('selected'));
   thumbEl.classList.add('selected');
 
-  // Load image — get natural aspect ratio on load
   paintImg.onload = () => {
-    paintAspect = paintImg.naturalWidth / paintImg.naturalHeight;
-    applyTransform();
-    paintWrap.classList.add('visible');
-  };
-  paintImg.onerror = () => {
-    // Fallback: use declared ratio
-    paintAspect = w / h;
-    applyTransform();
-    paintWrap.classList.add('visible');
-  };
-  paintImg.src = obra.image;
+    // ── ORIENTATION FIX ──────────────────────────────────────────────
+    // Declared measures always go smaller-first (e.g. "50 x 70 cm")
+    // regardless of actual orientation. The PHOTO determines which
+    // dimension is width and which is height:
+    //   photo landscape (wider > taller) → larger declared dim = width
+    //   photo portrait  (taller > wider) → larger declared dim = height
+    // We always scale from declared width and derive height from photo aspect.
+    const photoAspect      = paintImg.naturalWidth / paintImg.naturalHeight;
+    const photoIsLandscape = photoAspect > 1;
+    const smallerDim       = Math.min(w, h);
+    const largerDim        = Math.max(w, h);
 
+    if (photoIsLandscape) {
+      paintPhysW = largerDim;   // wider painting → larger number is the width
+      paintPhysH = smallerDim;
+    } else {
+      paintPhysW = smallerDim;  // taller painting → smaller number is the width
+      paintPhysH = largerDim;
+    }
+    paintAspect = photoAspect;  // always render with real photo proportions
+
+    // Center painting in usable viewport
+    const panelH = panelOpen ? bottomPanel.offsetHeight + 30 : 80;
+    pos.x = window.innerWidth / 2;
+    pos.y = (window.innerHeight - panelH) / 2;
+
+    applyTransform();
+    paintWrap.classList.add('visible');
+  };
+
+  paintImg.onerror = () => {
+    // Fallback: can't detect photo orientation, use declared ratio as-is
+    paintPhysW  = w;
+    paintPhysH  = h;
+    paintAspect = w / h;
+    pos.x = window.innerWidth / 2;
+    pos.y = (window.innerHeight - bottomPanel.offsetHeight - 30) / 2;
+    applyTransform();
+    paintWrap.classList.add('visible');
+  };
+
+  paintImg.src = obra.image;
   topTitle.textContent = obra.title;
   selectHint.classList.remove('show');
   showInfo(`${obra.title} — ${w} × ${h} cm`, 2800);
-
-  // Center painting in viewport above bottom panel
-  const panelH = bottomPanel.offsetHeight + 30;
-  pos.x = window.innerWidth / 2;
-  pos.y = (window.innerHeight - panelH) / 2;
-
-  // Auto-collapse panel so user can see the wall
   collapsePanel();
 }
 
 // ══════════════════════════════════════════════════════
-//  TRANSFORM — proportional scaling
+//  TRANSFORM
 //  Reference: declared WIDTH (cm) → pixel width
-//  Height: pixel width / image natural aspect ratio
-//  This respects real physical width while honoring photo orientation
+//  Height: derived from paintAspect (photo or declared, see above)
 // ══════════════════════════════════════════════════════
-function parseMeasures(m) {
-  const nums = m.match(/\d+/g);
-  if (!nums || nums.length < 2) return { w: 50, h: 70 };
-  return { w: parseInt(nums[0]), h: parseInt(nums[1]) };
+function pm(m) {
+  const n = m.match(/\d+/g);
+  return n && n.length >= 2
+    ? { w: parseInt(n[0]), h: parseInt(n[1]) }
+    : { w: 50, h: 70 };
 }
 
 function applyTransform() {
   if (!currentObra || paintAspect === null) return;
-
-  const pw = paintPhysW * pxPerCm;        // pixel width = declared cm * px/cm
-  const ph = pw / paintAspect;             // pixel height from real photo aspect ratio
-
+  const pw = paintPhysW * pxPerCm;
+  const ph = pw / paintAspect;
   paintWrap.style.width  = pw + 'px';
   paintWrap.style.height = ph + 'px';
   paintWrap.style.left   = (pos.x - pw / 2) + 'px';
   paintWrap.style.top    = (pos.y - ph / 2) + 'px';
-
-  // Badge shows DECLARED measures (what the artwork actually measures)
-  paintDims.textContent = `${paintPhysW} × ${paintPhysH} cm`;
+  paintDims.textContent  = `${paintPhysW} × ${paintPhysH} cm`;
 }
 
 // ══════════════════════════════════════════════════════
 //  SCALE SLIDER
 // ══════════════════════════════════════════════════════
-function sliderToPx(v)  { const t = v / 100; return 0.3 + t * t * 11.7; }
-function pxToSlider(p)  { return Math.max(1, Math.min(100, Math.round(Math.sqrt((p - 0.3) / 11.7) * 100))); }
+function sliderToPx(v) { const t = v / 100; return 0.3 + t * t * 11.7; }
+function pxToSlider(p) { return Math.max(1, Math.min(100, Math.round(Math.sqrt((p - 0.3) / 11.7) * 100))); }
 
 function syncSlider() {
-  scaleSlider.value = pxToSlider(pxPerCm);
-  scaleVal.textContent = pxPerCm.toFixed(1) + ' px/cm';
+  scaleSlider.value     = pxToSlider(pxPerCm);
+  scaleVal.textContent  = pxPerCm.toFixed(1) + ' px/cm';
 }
 
 scaleSlider.addEventListener('input', () => {
   pxPerCm = sliderToPx(+scaleSlider.value);
   scaleVal.textContent = pxPerCm.toFixed(1) + ' px/cm';
   applyTransform();
-  if (isA4Mode) positionA4();
+  if (isA4Mode) posA4();
 });
-
 syncSlider();
 
 // ══════════════════════════════════════════════════════
@@ -902,24 +875,19 @@ syncSlider();
 // ══════════════════════════════════════════════════════
 function collapsePanel() {
   panelOpen = false;
-  bottomPanel.classList.add('hidden-panel');
-  handleLabel.textContent = '▲ Catálogo';
+  bottomPanel.classList.add('collapsed');
+  handleLabel.textContent = 'Catálogo';
 }
 function expandPanel() {
   panelOpen = true;
-  bottomPanel.classList.remove('hidden-panel');
+  bottomPanel.classList.remove('collapsed');
   handleLabel.textContent = 'Catálogo';
 }
 
-$('panel-handle').addEventListener('click', () => {
-  panelOpen ? collapsePanel() : expandPanel();
-});
+$('panel-handle').addEventListener('click', () => panelOpen ? collapsePanel() : expandPanel());
 
 // ══════════════════════════════════════════════════════
 //  A4 CALIBRATION
-//  During A4 mode: painting is HIDDEN, only A4 frame shown.
-//  User matches frame to physical A4 → pxPerCm is saved.
-//  On exit: painting reappears at correct scale.
 // ══════════════════════════════════════════════════════
 $('btn-a4').addEventListener('click', () => {
   if (is2PtMode) end2Pt();
@@ -927,31 +895,26 @@ $('btn-a4').addEventListener('click', () => {
   $('btn-a4').classList.toggle('lit', isA4Mode);
 
   if (isA4Mode) {
-    // Hide painting, show only A4 frame
-    paintWrap.style.opacity = '0';
+    paintWrap.style.opacity = '0';   // hide painting, show only A4 frame
     a4Ref.classList.add('show');
-    positionA4();
-    showPill(pillMode, 'Ajusta el slider hasta que el marco amarillo coincida con la hoja A4', 0);
+    posA4();
+    showPill(pillMode, 'Ajusta el slider hasta que el marco coincida con una hoja A4 en la pared', 0);
   } else {
-    // End calibration: save and show painting at calibrated scale
     a4Ref.classList.remove('show');
     paintWrap.style.opacity = '';
     pillMode.classList.remove('show');
     saveCalib();
-    applyTransform();  // ← FIX: actually update painting size with new pxPerCm
+    applyTransform();
   }
 });
 
-function positionA4() {
+function posA4() {
   const rw     = A4_W_CM * pxPerCm;
   const rh     = A4_H_CM * pxPerCm;
   const panelH = panelOpen ? bottomPanel.offsetHeight + 20 : 60;
   const cx     = window.innerWidth / 2;
   const cy     = (window.innerHeight - panelH) / 2;
-  a4Ref.style.width  = rw + 'px';
-  a4Ref.style.height = rh + 'px';
-  a4Ref.style.left   = (cx - rw / 2) + 'px';
-  a4Ref.style.top    = (cy - rh / 2) + 'px';
+  a4Ref.style.cssText = `display:block;width:${rw}px;height:${rh}px;left:${cx - rw/2}px;top:${cy - rh/2}px;`;
 }
 
 // ══════════════════════════════════════════════════════
@@ -963,82 +926,60 @@ $('btn-2pt').addEventListener('click', () => {
 });
 
 function start2Pt() {
-  is2PtMode = true;
-  calibPt1 = calibPt2 = null;
-  clearDots();
+  is2PtMode = true; calibPt1 = calibPt2 = null; clearDots();
   calibOvl.classList.add('show');
   $('btn-2pt').classList.add('lit');
   $('btn-2pt').textContent = '✕ 10cm';
   clearLine();
   showPill(pillMode, 'Toca el punto 1 en la pared', 0);
 }
-
 function end2Pt() {
-  is2PtMode = false;
-  calibPt1 = calibPt2 = null;
-  clearDots();
+  is2PtMode = false; calibPt1 = calibPt2 = null; clearDots();
   calibOvl.classList.remove('show');
   $('btn-2pt').classList.remove('lit');
   $('btn-2pt').textContent = '10cm';
   pillMode.classList.remove('show');
   clearLine();
 }
-
 function clearLine() {
-  calibLine.setAttribute('x1', 0); calibLine.setAttribute('x2', 0);
-  calibLine.setAttribute('y1', 0); calibLine.setAttribute('y2', 0);
+  ['x1','x2','y1','y2'].forEach(a => calibLine.setAttribute(a, 0));
 }
-
 function clearDots() { calibDots.forEach(d => d.remove()); calibDots = []; }
-
 function placeDot(x, y) {
   const d = document.createElement('div');
   d.className = 'calib-dot';
-  d.style.left = x + 'px';
-  d.style.top  = y + 'px';
+  d.style.cssText = `left:${x}px;top:${y}px`;
   document.body.appendChild(d);
   calibDots.push(d);
 }
-
 function onCalibTap(x, y) {
   if (!calibPt1) {
-    calibPt1 = { x, y };
-    placeDot(x, y);
-    showPill(pillMode, 'Ahora toca el punto 2 (a 10 cm exactos del primero)', 0);
+    calibPt1 = { x, y }; placeDot(x, y);
+    showPill(pillMode, 'Ahora toca el punto 2 (10 cm exactos del primero)', 0);
   } else {
-    calibPt2 = { x, y };
-    placeDot(x, y);
+    calibPt2 = { x, y }; placeDot(x, y);
     calibLine.setAttribute('x1', calibPt1.x); calibLine.setAttribute('y1', calibPt1.y);
     calibLine.setAttribute('x2', calibPt2.x); calibLine.setAttribute('y2', calibPt2.y);
-
-    const pxDist = Math.hypot(calibPt2.x - calibPt1.x, calibPt2.y - calibPt1.y);
-    pxPerCm      = pxDist / REF_CM;
-    syncSlider();
-    applyTransform();  // update painting immediately
-    saveCalib();
-    showPill(pillCalib, '✓ Calibración guardada', 2500, 'green');
+    pxPerCm = Math.hypot(calibPt2.x - calibPt1.x, calibPt2.y - calibPt1.y) / REF_CM;
+    syncSlider(); applyTransform(); saveCalib();
+    showPill(pillCalib, '✓ Calibración guardada', 2500, 'bright');
     setTimeout(end2Pt, 1400);
   }
 }
-
 calibOvl.addEventListener('click',    e => onCalibTap(e.clientX, e.clientY));
 calibOvl.addEventListener('touchend', e => {
   e.preventDefault();
-  const t = e.changedTouches[0];
-  onCalibTap(t.clientX, t.clientY);
+  onCalibTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
 }, { passive: false });
 
 // ══════════════════════════════════════════════════════
-//  SCREENSHOT — canvas compositing (no html2canvas)
-//  Draws video frame then painting on top manually.
+//  SCREENSHOT — canvas compositing
 // ══════════════════════════════════════════════════════
 $('btn-snap').addEventListener('click', async () => {
   if (!currentObra || !paintWrap.classList.contains('visible')) {
     showInfo('Selecciona una pintura primero', 2000);
     return;
   }
-
-  // Flash
   flash.classList.add('on');
   setTimeout(() => flash.classList.remove('on'), 180);
 
@@ -1049,66 +990,45 @@ $('btn-snap').addEventListener('click', async () => {
     const canvas = $('snap-canvas');
     canvas.width  = W * dpr;
     canvas.height = H * dpr;
-    const ctx    = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
 
-    // 1. Draw the live video frame
+    // 1. Video frame
     ctx.drawImage(video, 0, 0, W, H);
 
-    // 2. Draw the painting at its current position/size
-    const rect   = paintWrap.getBoundingClientRect();
-    const pw     = rect.width;
-    const ph     = rect.height;
-    const px     = rect.left;
-    const py     = rect.top;
-    const FRAME  = 10;   // same as ::before inset
-    const MAT    = 3;    // same as ::after inset
+    // 2. Frame + painting
+    const rect  = paintWrap.getBoundingClientRect();
+    const FRAME = 11, MAT = 3;
 
-    // Shadow
-    ctx.shadowColor   = 'rgba(0,0,0,0.65)';
-    ctx.shadowBlur    = 28;
-    ctx.shadowOffsetY = 10;
+    ctx.shadowColor = 'rgba(0,0,0,0.7)';
+    ctx.shadowBlur  = 32; ctx.shadowOffsetY = 12;
+    ctx.fillStyle   = '#0d0b06';
+    ctx.fillRect(rect.left - FRAME, rect.top - FRAME, rect.width + FRAME*2, rect.height + FRAME*2);
 
-    // Outer dark frame
-    ctx.fillStyle = '#1a1208';
-    ctx.fillRect(px - FRAME, py - FRAME, pw + FRAME * 2, ph + FRAME * 2);
+    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+    ctx.fillStyle   = '#eceae4';
+    ctx.fillRect(rect.left - MAT, rect.top - MAT, rect.width + MAT*2, rect.height + MAT*2);
 
-    // Reset shadow before mat/image
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur  = 0;
-    ctx.shadowOffsetY = 0;
-
-    // Cream mat
-    ctx.fillStyle = '#ece8df';
-    ctx.fillRect(px - MAT, py - MAT, pw + MAT * 2, ph + MAT * 2);
-
-    // Painting image — create a fresh image element to avoid taint
-    await new Promise((resolve, reject) => {
-      const img    = new Image();
+    await new Promise(resolve => {
+      const img = new Image();
       img.crossOrigin = 'anonymous';
-      img.onload  = () => { ctx.drawImage(img, px, py, pw, ph); resolve(); };
+      img.onload  = () => { ctx.drawImage(img, rect.left, rect.top, rect.width, rect.height); resolve(); };
       img.onerror = () => {
-        // If crossOrigin fails, try without (will taint canvas but still capture)
-        const img2   = new Image();
-        img2.onload  = () => { try { ctx.drawImage(img2, px, py, pw, ph); } catch(e){} resolve(); };
-        img2.onerror = resolve;
-        img2.src     = paintImg.src;
+        try { ctx.drawImage(paintImg, rect.left, rect.top, rect.width, rect.height); } catch(e) {}
+        resolve();
       };
-      img.src = paintImg.src + (paintImg.src.includes('?') ? '&' : '?') + '_nc=' + Date.now();
+      img.src = paintImg.src;
     });
 
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-    snapPrevImg.src = dataUrl;
+    snapPrevImg.src = canvas.toDataURL('image/jpeg', 0.92);
     snapPreview.classList.add('show');
-
   } catch (err) {
     showInfo('Error al capturar: ' + err.message, 3000);
-    console.error(err);
   }
 });
 
 $('snap-save').addEventListener('click', () => {
-  const name = currentObra ? currentObra.title.replace(/\s+/g, '_') : 'obra';
+  const name = currentObra?.title.replace(/\s+/g, '_') || 'obra';
   const a    = document.createElement('a');
   a.href     = snapPrevImg.src;
   a.download = `Ravelo_${name}.jpg`;
@@ -1119,16 +1039,14 @@ $('snap-close').addEventListener('click', () => snapPreview.classList.remove('sh
 // ══════════════════════════════════════════════════════
 //  SAVE CALIBRATION
 // ══════════════════════════════════════════════════════
-function saveCalib() {
-  localStorage.setItem(CALIB_KEY, pxPerCm);
-}
+function saveCalib() { localStorage.setItem(CALIB_KEY, pxPerCm); }
 
 // ══════════════════════════════════════════════════════
-//  STATUS PILLS
+//  PILLS
 // ══════════════════════════════════════════════════════
 function showPill(el, msg, ms, cls) {
   el.textContent = msg;
-  el.className   = 'pill show' + (cls ? ' ' + cls : '');
+  el.className   = 'pill show' + (cls ? ' '+cls : '');
   clearTimeout(el._t);
   if (ms > 0) el._t = setTimeout(() => el.classList.remove('show'), ms);
 }
@@ -1140,13 +1058,12 @@ function showInfo(msg, ms) { showPill(pillInfo, msg, ms); }
 paintWrap.addEventListener('touchstart', e => {
   e.preventDefault();
   if (e.touches.length === 1) {
-    isDragging  = true; isPinching = false;
-    const t     = e.touches[0];
-    dragOffset  = { x: t.clientX - pos.x, y: t.clientY - pos.y };
+    isDragging = true; isPinching = false;
+    dragOffset = { x: e.touches[0].clientX - pos.x, y: e.touches[0].clientY - pos.y };
     paintWrap.classList.add('dragging');
   } else if (e.touches.length === 2) {
-    isDragging  = false; isPinching = true;
-    pinchStart  = { dist: touchDist(e.touches), scale: pxPerCm };
+    isDragging = false; isPinching = true;
+    pinchStart = { dist: touchDist(e.touches), scale: pxPerCm };
   }
 }, { passive: false });
 
@@ -1157,11 +1074,9 @@ paintWrap.addEventListener('touchmove', e => {
     pos.y = e.touches[0].clientY - dragOffset.y;
     applyTransform();
   } else if (isPinching && e.touches.length === 2) {
-    const ratio = touchDist(e.touches) / pinchStart.dist;
-    pxPerCm     = Math.max(0.2, Math.min(15, pinchStart.scale * ratio));
-    syncSlider();
-    applyTransform();
-    if (isA4Mode) positionA4();
+    pxPerCm = Math.max(0.2, Math.min(15, pinchStart.scale * touchDist(e.touches) / pinchStart.dist));
+    syncSlider(); applyTransform();
+    if (isA4Mode) posA4();
   }
 }, { passive: false });
 
@@ -1193,15 +1108,12 @@ window.addEventListener('mousemove', e => {
 window.addEventListener('mouseup', () => {
   if (isDragging) { isDragging = false; paintWrap.classList.remove('dragging'); }
 });
-
-// Scroll wheel (desktop)
 window.addEventListener('wheel', e => {
   if (!currentObra) return;
   e.preventDefault();
   pxPerCm = Math.max(0.2, Math.min(15, pxPerCm * (e.deltaY > 0 ? 0.95 : 1.05)));
-  syncSlider();
-  applyTransform();
-  if (isA4Mode) positionA4();
+  syncSlider(); applyTransform();
+  if (isA4Mode) posA4();
 }, { passive: false });
 
 // ══════════════════════════════════════════════════════
@@ -1216,31 +1128,19 @@ function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
 $('start-btn').addEventListener('click', async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: 'environment' },
-        width:  { ideal: 1920 },
-        height: { ideal: 1080 }
-      }
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }
     });
     video.srcObject = stream;
     permScreen.classList.remove('show');
-
-    if (!localStorage.getItem(SEEN_KEY)) {
-      instrOvl.classList.add('show');
-    } else {
-      selectHint.classList.add('show');
-    }
-
-    if (localStorage.getItem(CALIB_KEY)) {
-      showInfo('Escala restaurada — puedes recalibrar con A4 o 10cm', 3000);
-    }
+    localStorage.getItem(SEEN_KEY) ? selectHint.classList.add('show') : instrOvl.classList.add('show');
+    if (localStorage.getItem(CALIB_KEY)) showInfo('Escala restaurada — puedes recalibrar con A4 o 10cm', 3000);
   } catch (err) {
     const el = $('err-msg');
     el.style.display = 'block';
-    el.textContent =
-      err.name === 'NotAllowedError' ? 'Acceso denegado. Habilita el permiso de cámara en la configuración de tu navegador.' :
-      err.name === 'NotFoundError'   ? 'No se encontró cámara en este dispositivo.' :
-                                       'Error al acceder a la cámara: ' + err.message;
+    el.textContent = err.name === 'NotAllowedError'
+      ? 'Acceso denegado. Habilita el permiso de cámara en la configuración de tu navegador.'
+      : err.name === 'NotFoundError' ? 'No se encontró cámara en este dispositivo.'
+      : 'Error: ' + err.message;
   }
 });
 
@@ -1251,8 +1151,7 @@ $('close-instr').addEventListener('click', () => {
 });
 $('btn-help').addEventListener('click', () => instrOvl.classList.add('show'));
 $('back-btn').addEventListener('click', () => window.location.href = 'index.html');
-
-window.addEventListener('resize', () => { applyTransform(); if (isA4Mode) positionA4(); });
+window.addEventListener('resize', () => { applyTransform(); if (isA4Mode) posA4(); });
 
 // ══════════════════════════════════════════════════════
 //  BOOT
