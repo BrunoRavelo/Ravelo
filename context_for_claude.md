@@ -1,111 +1,102 @@
 # Context: Catálogo AR — Alfredo Ravelo (Acuarelas)
 
 ## Qué es esto
-Sitio web estático de catálogo de obras de arte (acuarelas) del artista Alfredo Ravelo. Funciona como galería + vitrina de ventas. No tiene backend ni base de datos — todo es HTML/CSS/JS vanilla + Bootstrap 5 + un archivo JSON de obras.
+Sitio web estático de catálogo de obras de arte (acuarelas) del artista Alfredo Ravelo. Funciona como galería + vitrina de ventas. No tiene backend — todo es HTML/CSS/JS vanilla + un archivo JSON.
 
 ## Stack actual
 - HTML/CSS/JS vanilla (sin frameworks)
-- Bootstrap 5 (solo para grid y algunos componentes)
+- Bootstrap 5 en `index.html` (solo grid/navbar — se elimina en Sprint 6)
 - `obras.json` — fuente de verdad de todas las obras
-- Archivos estáticos, se puede servir desde cualquier hosting (Netlify, GitHub Pages, etc.)
+- Archivos estáticos, deployable en Netlify, GitHub Pages, etc.
 
 ## Estructura de archivos
 ```
 /
-├── index.html          # Galería principal (actualmente ~1400 líneas, hardcodeado)
+├── index.html          # Galería principal — AÚN ~1400 líneas hardcodeadas (refactorizar Sprint 6)
 ├── styles.css          # Estilos globales
-├── obras.json          # Fuente de verdad: todas las obras con título, medidas, técnica, descripción
-├── preview.html        # ← PESTAÑA AR (Sprint 1: construida en este sprint)
-├── info.html           # Detalle de una obra (recibe ?id= por query string)
+├── obras.json          # Fuente de verdad: id, title, image, measures, technique, description, award
+├── preview.html        # AR viewer (COMPLETO — Sprint 5b)
+├── info.html           # Detalle de obra (?id= por query string)
 ├── size.html           # Comparador de tamaños
 └── assets/
     ├── logo.png
-    ├── flores/         # flores1.jpg, flores2.jpg, ...
-    ├── rostros/        # rostro1.jpg, ...
-    ├── catrinas/
-    ├── desnudos/
-    ├── paisajes/
-    ├── expresiones/
-    ├── mexico/
-    ├── naturalezamuerta/
-    ├── sacro/
-    ├── payasos/
-    ├── celebridades/
-    ├── manos/
-    └── animales/
+    ├── flores/ rostros/ desnudos/ catrinas/ paisajes/ expresiones/
+    ├── mexico/ naturalezamuerta/ sacro/ payasos/ celebridades/ manos/ animales/
 ```
 
-## obras.json — formato de cada objeto
+## obras.json — formato
 ```json
 {
   "id": 1,
   "title": "Sinfonía de Flores",
-  "image": "assets/flores/flores1.jpg",   // ruta relativa desde root
-  "measures": "110 x 150 cm",             // siempre "W x H cm"
+  "image": "assets/flores/flores1.jpg",
+  "measures": "110 x 150 cm",
   "technique": "Acuarela sobre papel de algodón",
   "description": "...",
-  "award": ""                              // vacío si no tiene premio
+  "award": ""
 }
 ```
 
-## Tamaños disponibles (data-size en HTML)
-| data-size | Medidas reales |
-|-----------|----------------|
-| media     | 35 × 50 cm     |
-| hoja      | 50 × 70 cm     |
-| 2hojas    | 65 × 100 cm    |
-| 3hojas    | 85 × 200 cm    |
-| 4hojas    | 110 × 150 cm   |
+**Convención de medidas — CRÍTICO:**
+Las medidas SIEMPRE van del número menor al mayor, sin importar orientación real.
+"50 x 70 cm" puede ser vertical u horizontal — la foto determina cuál es cuál.
+- Foto horizontal (naturalWidth > naturalHeight) → número grande = ancho, chico = alto.
+- Foto vertical   (naturalHeight > naturalWidth) → número grande = alto, chico = ancho.
+La categoría se infiere del path de la imagen (ej. `/flores/` → "flores").
 
-## Categorías disponibles (data-category)
-flores, celebridades, catrinas, payasos, sacro, mexico, desnudos, rostros, animales, expresion, manos, paisaje, nat
-
-## Variables CSS (styles.css)
-```css
---main-bg-color: #000
---secondary-bg-color: #111
---hover-bg-color: #333
---light-text-color: #fff
---highlight-color: #ffc107       /* dorado — color de acento principal */
---transparent-grey: rgba(128,128,128,0.5)
-```
+## Tamaños disponibles
+| data-size | Medidas |
+|-----------|---------|
+| media     | 35×50 cm |
+| hoja      | 50×70 cm |
+| 2hojas    | 65×100 cm |
+| 3hojas    | 85×200 cm |
+| 4hojas    | 110×150 cm |
 
 ---
 
-## Roadmap de sprints
+## Estado de sprints
 
-### Fase 1 — AR (vanilla JS, sin librerías AR)
-- **Sprint 1 ✅** `preview.html`: cámara (getUserMedia), overlay de pintura draggable, pinch-to-zoom, slider de escala, calibración A4 (marco amarillo de referencia), thumbnails de obras desde datos inline, instrucciones al primer uso.
-- **Sprint 2** `preview.html` mejora: fetch desde `obras.json`, calibración de 2 puntos (más precisa), selector por categoría, indicador de dimensiones en pantalla, guardar última escala calibrada en localStorage.
-- **Sprint 3** `preview.html` polish: sombra realista de cuadro, modo screenshot (html2canvas), comparar 2 pinturas, ajuste de brillo de pared (filtro CSS), tour de instrucciones animado.
+### Fase 1 — AR viewer (preview.html) COMPLETA ✅
 
-### Fase 2 — Refactorización galería
-- **Sprint 4**: Reemplazar `index.html` hardcodeado por galería dinámica (fetch `obras.json` → renderizar tarjetas). El HTML de la galería queda en ~50 líneas. Mantener mismos filtros y comportamiento.
-- **Sprint 5**: UI mejorada — pills horizontales de categoría (siempre visibles, reemplaza dropdown), sidebar sticky de filtros en desktop, layout masonry real (cada columna tiene sus proporciones de pintura), transiciones CSS al filtrar.
+**Sprint 1–5b completados.** preview.html es un AR viewer funcional con:
+- Cámara trasera (getUserMedia), overlay de pintura draggable
+- Pinch-zoom con dos dedos + slider horizontal
+- Dos métodos de calibración de escala real:
+  - **A4**: marco visual — pintura se oculta, usuario ajusta slider al tamaño de una hoja A4 real
+  - **10cm**: toca dos puntos en la pared separados 10 cm exactos
+- Calibración persiste en localStorage entre sesiones
+- Panel inferior colapsable (52px siempre visible) — se colapsa automáticamente al seleccionar pintura
+- Categorías como pills scrolleables generadas dinámicamente desde obras.json
+- Thumbnails con barra de tamaño proporcional al área real de la obra
+- Marco de cuadro realista (CSS pseudo-elements): café oscuro con passepartout crema
+- Screenshot via canvas compositing (frame de video + marco + imagen)
+- Orientación detectada por foto: asigna dimensión declarada correctamente
+- Paleta: negro + blanco puro, tipografía light, estética museo
 
-### Fase 3 — Performance de imágenes
-- **Sprint 6**: Script Node.js (Sharp) para convertir todos los JPG a WebP + generar thumbnails 40px para blur placeholder. Agregar `loading="lazy"` + Intersection Observer + técnica de blur-up (imagen tiny → imagen real con transición). Preload solo categoría visible.
+**Decisiones de diseño AR cerradas:**
+- Sin PWA, sin modo comparar, sin ajuste de brillo (eliminados por decisión)
+- Sin html2canvas — screenshot propio con canvas API
+- Escala siempre fija calibrada por usuario, no auto-escala por distancia
+
+### Fase 2 — Refactorización galería ← SIGUIENTE
+
+- **Sprint 6** ← EN PLANEACIÓN
+- **Sprint 7** Performance de imágenes (WebP, lazy, blur-up)
 
 ---
 
-## Decisiones de diseño ya tomadas
-1. **Escala AR**: tamaño fijo calibrado por usuario (no auto-escala por distancia). Calibración mediante hoja A4 como referencia física.
-2. **Sin librerías AR** en Fase 1 — solo getUserMedia + CSS transforms. MindAR.js se evalúa para Sprint futuro (Fase 2 del AR).
-3. **Proporciones**: parsear `measures` del JSON para calcular px proporcionales a cm. Una pintura de 110×150 debe verse siempre más grande que una de 35×50.
-4. **Sin backend**: todo es estático. Si en el futuro se necesita carrito o auth, evaluar Next.js.
-5. **Colores**: negro + dorado (#ffc107) — estética de galería de arte. No cambiar la paleta principal.
+## Problemas conocidos en index.html (pendientes Sprint 6)
+1. ~1400 líneas hardcodeadas — no usa obras.json
+2. Sin `loading="lazy"` en imágenes
+3. Imágenes JPG sin comprimir (~3–8 MB cada una)
+4. Typo: "50x 70 com" (en filtro de tamaño)
+5. Sin conexión galería → AR: usuario debe buscar la pintura de nuevo en preview.html
+6. Paleta inconsistente: index.html usa amarillo (#ffc107), preview.html usa blanco
 
----
-
-## Problemas conocidos del código actual
-1. `index.html` tiene ~1400 líneas de HTML duplicado — la galería está hardcodeada aunque existe `obras.json`. (Se arregla en Sprint 4)
-2. Las imágenes no tienen `loading="lazy"` — todas cargan al mismo tiempo. (Sprint 6)
-3. Las imágenes son JPG sin optimizar, probablemente 3–8 MB cada una. (Sprint 6)
-4. El filtro de tamaño tiene un typo: "50x 70 com" (debería ser "50 × 70 cm").
-5. `data-size="3hojas"` en el HTML corresponde a 85×200 pero el JSON dice `"measures": "85 x 200 cm"` — consistente, solo hay que saberlo.
-
-## Notas de UX importantes
-- El artista es mexicano — la interfaz está en español.
-- Los usuarios principales son coleccionistas/compradores, no desarrolladores.
-- La feature AR es el diferenciador clave — el cliente quiere saber cómo se ve la pintura en su pared ANTES de comprar.
-- Mobile-first: la mayoría del tráfico esperado es desde celular.
+## Notas de UX
+- Interfaz en español. Artista y mercado mexicano.
+- Usuarios: coleccionistas/compradores.
+- AR es el diferenciador clave. Flujo galería → AR debe ser sin fricción.
+- Mobile-first.
+- Estética: galería de arte / museo. Negro + blanco. Sin decoración innecesaria.

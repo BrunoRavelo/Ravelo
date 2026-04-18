@@ -1,1593 +1,780 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Obras Alfredo Ravelo</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="preload" href="assets/logo.png" as="image">
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <title>Alfredo Ravelo — Acuarelas</title>
+  <style>
 
+    /* ══════════════════════════════════════════════
+       CARD_MODE — cambia este valor para probar:
+       'c'     → título + medidas debajo, botón AR siempre visible
+       'a'     → solo botón AR en overlay al hover/touch
+       'b'     → overlay con info + botón AR al hover/touch
+       'photo' → solo foto, sin texto ni botones
+    ══════════════════════════════════════════════ */
 
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #000;
+      --bg2: #0a0a0a;
+      --border: rgba(255,255,255,0.07);
+      --text: #fff;
+      --text-dim: rgba(255,255,255,0.4);
+      --text-faint: rgba(255,255,255,0.2);
+      --gap: 8px;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      min-height: 100%;
+    }
+
+    /* ── Navbar ───────────────────────────────── */
+    .navbar {
+      position: sticky; top: 0;
+      background: rgba(0,0,0,0.96);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+      padding: 0 20px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .navbar-brand {
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 1.3rem;
+      font-weight: normal;
+      color: var(--text);
+      letter-spacing: 1px;
+      text-decoration: none;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .nav-links {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: nowrap;
+    }
+    .nav-link {
+      color: var(--text-dim);
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: color 0.2s;
+      white-space: nowrap;
+    }
+    .nav-link:hover, .nav-link.active { color: var(--text); }
+    .nav-link-ar {
+      border: 1px solid rgba(255,255,255,0.18);
+      padding: 5px 12px;
+      border-radius: 2px;
+      color: rgba(255,255,255,0.65);
+      transition: all 0.2s;
+    }
+    .nav-link-ar:hover { border-color: rgba(255,255,255,0.45); color: var(--text); background: rgba(255,255,255,0.05); }
+
+    /* ── Filter bar ───────────────────────────── */
+    #filter-bar {
+      position: sticky;
+      top: 54px;
+      background: rgba(0,0,0,0.94);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      z-index: 99;
+      padding: 8px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .pill-row {
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 1px; /* prevent clipping on scroll */
+    }
+    .pill-row::-webkit-scrollbar { display: none; }
+
+    .fpill {
+      flex-shrink: 0;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-dim);
+      background: transparent;
+      transition: all 0.15s;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .fpill:hover  { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.25); }
+    .fpill.active { color: var(--text); border-color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.08); }
+    .fpill-count  { font-size: 9px; opacity: 0.4; margin-left: 3px; }
+
+    #results-count {
+      font-size: 10px;
+      font-weight: 300;
+      color: var(--text-faint);
+      letter-spacing: 0.5px;
+      padding: 0 2px;
+    }
+
+    /* ── Gallery container ────────────────────── */
+    #gallery-wrap {
+      padding: var(--gap);
+    }
+
+    /* Masonry with CSS columns — simplest robust approach */
+    #gallery {
+      columns: 3;
+      column-gap: var(--gap);
+    }
+    @media (max-width: 700px)  { #gallery { columns: 2; } }
+    @media (max-width: 380px)  { #gallery { columns: 2; --gap: 5px; } }
+
+    /* ── Card ─────────────────────────────────── */
+    .card {
+      break-inside: avoid;
+      margin-bottom: var(--gap);
+      position: relative;
+      background: var(--bg2);
+      overflow: hidden;
+      cursor: pointer;
+      display: block; /* important: block, not flex */
+    }
+
+    /* Image — width 100%, height auto → natural proportions */
+    .card-img {
+      display: block;
+      width: 100%;
+      height: auto;         /* KEY FIX: lets image define its own height */
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .card:hover .card-img { transform: scale(1.04); }
+
+    /* Mode C: info below image */
+    .card-body {
+      padding: 8px 10px 10px;
+    }
+    .card-title-link {
+      display: block;
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 12px;
+      font-weight: normal;
+      color: rgba(255,255,255,0.68);
+      line-height: 1.4;
+      margin-bottom: 2px;
+      text-decoration: none;
+    }
+    .card-title-link:hover { color: var(--text); }
+    .card-measures {
+      font-size: 9px;
+      font-weight: 300;
+      color: var(--text-faint);
+      letter-spacing: 0.3px;
+      margin-bottom: 7px;
+    }
+    .btn-ar-card {
+      display: block;
+      width: 100%;
+      padding: 6px 0;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.5);
+      font-size: 9px;
+      font-weight: 300;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.18s;
+      text-align: center;
+    }
+    .btn-ar-card:hover { border-color: rgba(255,255,255,0.4); color: var(--text); background: rgba(255,255,255,0.05); }
+
+    /* Modes A & B: overlay */
+    .card-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.58);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 10px;
+      gap: 5px;
+      opacity: 0;
+      transition: opacity 0.22s;
+    }
+    /* Touch devices: always show overlay */
+    @media (hover: none) { .card-overlay { opacity: 1; } }
+    .card:hover .card-overlay { opacity: 1; }
+
+    .ov-title {
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 11px;
+      color: rgba(255,255,255,0.88);
+      line-height: 1.3;
+    }
+    .ov-dim {
+      font-size: 9px;
+      color: rgba(255,255,255,0.4);
+    }
+    .ov-btns { display: flex; gap: 5px; margin-top: 2px; }
+    .ov-btn {
+      flex: 1;
+      padding: 6px 4px;
+      font-size: 9px;
+      font-weight: 300;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.75);
+      transition: all 0.15s;
+    }
+    .ov-btn:hover { background: rgba(255,255,255,0.22); color: var(--text); }
+    .ov-btn-ar {
+      border-color: rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.15);
+    }
+
+    /* ── Loading ──────────────────────────────── */
+    #loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 0;
+      gap: 12px;
+      color: var(--text-faint);
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .spin {
+      width: 18px; height: 18px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-top-color: rgba(255,255,255,0.5);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #no-results {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-faint);
+      font-size: 12px;
+      font-weight: 300;
+    }
+    #no-results.show { display: block; }
+
+    /* ── Info modal (bottom sheet) ────────────── */
+    #info-modal {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    #info-modal.show { display: flex; }
+
+    #info-sheet {
+      background: #0d0d0d;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-bottom: none;
+      border-radius: 12px 12px 0 0;
+      width: 100%;
+      max-width: 540px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    #info-modal.show #info-sheet { transform: translateY(0); }
+
+    #info-handle {
+      width: 36px; height: 4px;
+      background: rgba(255,255,255,0.14);
+      border-radius: 2px;
+      margin: 12px auto 0;
+    }
+    #info-close {
+      position: absolute; top: 14px; right: 16px;
+      width: 28px; height: 28px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.5);
+      border-radius: 50%;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    #info-close:hover { color: var(--text); border-color: rgba(255,255,255,0.3); }
+
+    #info-img-wrap {
+      width: 100%;
+      margin-top: 14px;
+      background: #111;
+      overflow: hidden;
+      max-height: 42vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #info-img-wrap img {
+      width: 100%;
+      height: auto;
+      max-height: 42vh;
+      object-fit: contain;
+      display: block;
+    }
+
+    #info-body { padding: 18px 22px 24px; }
+    #info-name {
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 20px; font-weight: normal;
+      color: var(--text); margin-bottom: 6px; line-height: 1.3;
+    }
+    #info-meta {
+      font-size: 11px; font-weight: 300;
+      color: var(--text-dim); margin-bottom: 12px; line-height: 1.6;
+    }
+    #info-award {
+      font-size: 11px; color: rgba(255,255,255,0.45);
+      font-style: italic; margin-bottom: 12px; display: none;
+    }
+    #info-award.show { display: block; }
+    #info-desc {
+      font-size: 13px; font-weight: 300;
+      color: rgba(255,255,255,0.5); line-height: 1.75; margin-bottom: 20px;
+    }
+    #info-ar {
+      display: block; width: 100%;
+      padding: 13px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.22);
+      color: rgba(255,255,255,0.7);
+      font-size: 10px; font-weight: 300;
+      letter-spacing: 2px; text-transform: uppercase;
+      cursor: pointer; border-radius: 2px;
+      transition: all 0.2s; text-align: center;
+    }
+    #info-ar:hover { border-color: rgba(255,255,255,0.5); color: var(--text); background: rgba(255,255,255,0.04); }
+
+    /* ── Footer ───────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 20px;
+      text-align: center;
+      font-size: 9px; font-weight: 300;
+      color: var(--text-faint);
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+  </style>
 </head>
 <body>
-  <!-- Header with Navbar -->
-  <header>
-    <nav id="navbar" class="navbar navbar-expand-lg navbar-dark fixed-top">
-      <div class="container">
-        <!-- Logo -->
-        <a class="navbar-brand" href="#">
-          <img src="assets/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;"> Alfredo Ravelo
-        </a>
 
-        <!-- Toggler for mobile view -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
+<!-- Navbar -->
+<nav class="navbar">
+  <a href="index.html" class="navbar-brand">Alfredo Ravelo</a>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link active">Galería</a>
+    <a href="preview.html" class="nav-link nav-link-ar">
+      <svg width="12" height="10" viewBox="0 0 28 24" fill="none" stroke="currentColor"
+           stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+           style="display:inline-block;vertical-align:middle;margin-right:5px;margin-top:-1px">
+        <path d="M1 7C1 5.9 1.9 5 3 5h2.4L7 2h14l1.6 3H25c1.1 0 2 .9 2 2v13c0 1.1-.9 2-2 2H3c-1.1 0-2-.9-2-2V7z"/>
+        <circle cx="14" cy="13" r="4"/>
+      </svg>Ver en pared
+    </a>
+  </div>
+</nav>
 
-        <!-- Navbar links -->
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav mx-auto">
-            <li class="nav-item">
-              <a class="nav-link home-link" href="#">Home</a>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="galleryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Categorías
-              </a>
-              <ul class="dropdown-menu" aria-labelledby="galleryDropdown">
-                <li><a class="dropdown-item" href="#" data-category="all">Ver todos</a></li>
-                <li><a class="dropdown-item" href="#" data-category="flores">Flores</a></li>
-                <li><a class="dropdown-item" href="#" data-category="celebridades">Celebridades</a></li>
-                <li><a class="dropdown-item" href="#" data-category="catrinas">Catrinas</a></li>
-                <li><a class="dropdown-item" href="#" data-category="payasos">Payasos</a></li>
-                <li><a class="dropdown-item" href="#" data-category="sacro">Sacro</a></li>
-                <li><a class="dropdown-item" href="#" data-category="mexico">México</a></li>
-                <li><a class="dropdown-item" href="#" data-category="desnudos">Desnudos</a></li>
-                <li><a class="dropdown-item" href="#" data-category="rostros">Rostros</a></li>
-                <li><a class="dropdown-item" href="#" data-category="animales">Animales</a></li>
-                <li><a class="dropdown-item" href="#" data-category="expresion">Expresión Corporal</a></li>
-                <li><a class="dropdown-item" href="#" data-category="manos">Manos</a></li>
-                <li><a class="dropdown-item" href="#" data-category="paisaje">Paisajes y Marinas</a></li>
-                <li><a class="dropdown-item" href="#" data-category="nat">Naturaleza muerta</a></li>
+<!-- Filter bar -->
+<div id="filter-bar">
+  <div class="pill-row" id="cat-row"></div>
+  <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;min-width:0;">
+    <div class="pill-row" id="size-row" style="flex:1;min-width:0;"></div>
+    <div id="results-count"></div>
+  </div>
+</div>
 
-              </ul>
-            </li>
-            <li>
-              <a class="nav-link home-link" href="size.html">Tamaños</a>
-            </li>
-            <li>
-              <a class="nav-link home-link" href="preview.html">AR</a>
-            </li>
+<!-- Gallery -->
+<div id="gallery-wrap">
+  <div id="loading"><div class="spin"></div>Cargando</div>
+  <div id="gallery"></div>
+  <div id="no-results">Sin obras en esta selección</div>
+</div>
 
-            <!--
-            <li class="nav-item">
-              <a class="nav-link" href="#">Contacto</a>
-            </li>
-            -->
-
-
-          </ul>
-        </div>
-      </div>
-    </nav>
-  </header>
-
-
-<!-- Botón de filtro con los cambios aplicados -->
-<section class="filter-section">
-  <div class="container">
-    <div class="filter-header">
-      <!-- Botón de filtro con el atributo data-bs-toggle y data-bs-target -->
-      <button class="filter-button" id="filterToggle" data-bs-toggle="collapse" data-bs-target="#filterMenu">
-        Filtrar por tamaño
+<!-- Info modal -->
+<div id="info-modal">
+  <div id="info-sheet">
+    <div id="info-handle"></div>
+    <button id="info-close">×</button>
+    <div id="info-img-wrap"><img id="info-img" src="" alt=""></div>
+    <div id="info-body">
+      <div id="info-name"></div>
+      <div id="info-meta"></div>
+      <div id="info-award"></div>
+      <div id="info-desc"></div>
+      <button id="info-ar">
+        <svg width="12" height="10" viewBox="0 0 28 24" fill="none" stroke="currentColor"
+             stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+             style="display:inline-block;vertical-align:middle;margin-right:6px;margin-top:-2px">
+          <path d="M1 7C1 5.9 1.9 5 3 5h2.4L7 2h14l1.6 3H25c1.1 0 2 .9 2 2v13c0 1.1-.9 2-2 2H3c-1.1 0-2-.9-2-2V7z"/>
+          <circle cx="14" cy="13" r="4"/>
+        </svg>Ver en pared
       </button>
     </div>
-    <div class="filter-menu collapse" id="filterMenu">
-      <!-- Contenido del menú de filtros -->
-      <button class="clear-filters" id="clearFilters" type="button">Limpiar filtro</button>
-      <div class="filter-category">
-        <button class="filter-category-header" data-bs-toggle="collapse" data-bs-target="#sizeFilter">
-          TAMAÑO
-        </button>
-        <div id="sizeFilter" class="collapse show">
-          <label><input type="checkbox" value="media" class="filter-option"> Media hoja (35 x 50 cm)</label><br>
-          <label><input type="checkbox" value="hoja" class="filter-option"> 1 hoja (50x 70 com)</label><br>
-          <label><input type="checkbox" value="2hojas" class="filter-option"> 65 x 100 cm</label><br>
-          <label><input type="checkbox" value="3hojas" class="filter-option"> 85 x 200 cm</label><br>
-          <label><input type="checkbox" value="4hojas" class="filter-option"> 110 x 150 cm</label><br>
-        </div>
-      </div>
-    </div>
   </div>
-</section>
-
-
-
-  
-
-  <!-- Section with image gallery -->
-  <section class="container my-5" style="padding-top: 0px;">
-    <div class="row g-4">
-
-      <!--Flores-->
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="flores sacro" data-id="1" data-size="4hojas">
-        <div class="gallery-image">
-          <img src="assets/flores/flores1.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="flores" data-id="2" data-size="3hojas">
-        <div class="gallery-image">
-          <img src="assets/flores/flores2.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="flores" data-id="4" data-size="4hojas">
-        <div class="gallery-image">
-          <img src="assets/flores/flores4.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="flores" data-id="6" data-size="4hojas">
-        <div class="gallery-image">
-          <img src="assets/flores/flores6.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="flores" data-id="125" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/flores/flores12.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="flores" data-id="129" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/flores/flores16.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="flores" data-id="130" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/flores/flores17.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="flores" data-id="3" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/flores/flores3.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="flores" data-id="5" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/flores/flores5.jpg " class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="flores" data-size="hoja" data-id="8">
-        <div class="gallery-image">
-          <img src="assets/flores/flores8.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="flores" data-size="media" data-id="124">
-        <div class="gallery-image">
-          <img src="assets/flores/flores11.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="flores" data-size="media" data-id="126">
-        <div class="gallery-image">
-          <img src="assets/flores/flores13.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="flores" data-size="media" data-id="127">
-        <div class="gallery-image">
-          <img src="assets/flores/flores14.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="flores" data-size="media" data-id="128">
-        <div class="gallery-image">
-          <img src="assets/flores/flores15.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      
-      
-      
-    
-
-      <!--Celebridades-->
-
-    
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="celebridades" data-id="66" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/celebridades/celebridad1.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="celebridades" data-id="67" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/celebridades/celebridad2.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="celebridades" data-id="68" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/celebridades/celebridad4.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="celebridades" data-id="71" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/celebridades/celebridad7.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="celebridades" data-id="70" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/celebridades/celebridad6.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="celebridades" data-id="69" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/celebridades/celebridad5.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-
-      <!--Catrinas-->
-
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="catrinas" data-id="121" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/catrinas/catrina1.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="catrinas" data-id="122" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/catrinas/catrina2.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="catrinas" data-id="123" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/catrinas/catrina3.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="catrinas" data-id="131" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/catrinas/catrina4.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-
-
-      <!--Payasos-->
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="payasos" data-id="44" data-size="2hojas">
-        <div class="gallery-image">
-          <img src="assets/payasos/payaso2.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="payasos" data-id="45" data-size="2hojas">
-        <div class="gallery-image">
-          <img src="assets/payasos/payaso3.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="payasos" data-id="46" data-size="2hojas">
-        <div class="gallery-image">
-          <img src="assets/payasos/payaso4.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="payasos" data-id="48" data-size="2hojas">
-        <div class="gallery-image">
-          <img src="assets/payasos/payaso6.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="payasos" data-id="49" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/payasos/payaso7.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="payasos" data-id="43" data-size="2hojas">
-        <div class="gallery-image">
-          <img src="assets/payasos/payaso1.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="payasos" data-id="47" data-size="2hojas">
-        <div class="gallery-image">
-          <img src="assets/payasos/payaso5.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="payasos" data-id="50" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/payasos/payaso8.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="payasos" data-id="51" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/payasos/payaso9.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-
-      <!--sacro-->
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="payasos" data-id="98" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/sacro/sacro1.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="sacro" data-id="99" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/sacro/sacro2.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-
-      <!--Mexico-->
-      
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="mexico" data-id="60" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/mexico/mexico7.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="mexico" data-id="64" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/mexico/mexico11.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="mexico" data-id="144" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/mexico/mexico15.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="mexico" data-id="56" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/mexico/mexico3.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="mexico" data-id="65" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/mexico/mexico2.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="mexico" data-id="57" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/mexico/mexico4.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="mexico" data-id="58" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/mexico/mexico5.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="mexico"  data-id="59" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/mexico/mexico6.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="mexico" data-id="61" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/mexico/mexico8.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="mexico" data-id="62" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/mexico/mexico9.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="mexico" data-id="63" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/mexico/mexico10.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="mexico" data-id143="" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/mexico/mexico12.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="mexico" data-id="141" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/mexico/mexico13.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="mexico" data-id="142" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/mexico/mexico14.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Desnudos-->
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="desnudos" data-id="12" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/desnudos/desnudos3.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="desnudos" data-id="10" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/desnudos/desnudos1.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="desnudos" data-id="13" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/desnudos/desnudos4.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="desnudos" data-id="11" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/desnudos/desnudos2.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-
-
-
-      <!--Rostros-->
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="15" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro2.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="16" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro3.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="17" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro4.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="18" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro5.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="19" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro6.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="20" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro7.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="21" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro8.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="22" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro9.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="23" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro10.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="25" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro15.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="26" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro16.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="28" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro18.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="29" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro19.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="30" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro20.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="32" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro22.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="33" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro23.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="34" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro24.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="rostros" data-id="38" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro29.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="rostros" data-id="14" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro1.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="rostros" data-id="24" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro11.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="rostros" data-id="27" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro17.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="rostros" data-id="31" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro21.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="rostros" data-id="35" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro25.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="rostros" data-id="36" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro26.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="rostros" data-id="37" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro28.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="rostros" data-id="42" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/rostros/rostro34.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Animales -->
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="animales" data-id="73" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales1.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="animales" data-id="76" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales4.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="animales" data-id="77" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales5.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="animales" data-id="78" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales6.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="animales" data-id="79" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales7.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="animales" data-id="81" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales9.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="animales" data-id="85" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales13.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="animales" data-id="86" data-size="2hojas">
-        <div class="gallery-image">
-          <img src="assets/animales/animales14.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="animales" data-id="114" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales23.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="animales" data-id="120" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales29.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="74" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales2.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="75" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales3.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="80" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales8.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="82" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales10.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="83" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales11.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="84" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales12.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="87" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales15.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="88" data-size="2hojas">
-        <div class="gallery-image">
-          <img src="assets/animales/animales16.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="89" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales17.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="90" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales18.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="91" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales19.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="92" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales20.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="112" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales21.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="113" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales22.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="115" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales24.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="116" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales25.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="117" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales26.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="118" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales27.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="animales" data-id="119" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/animales/animales28.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-
-
-      <!--expresion -->
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="expresion" data-id="100" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/expresion/expresion1.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="expresion" data-id="102" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/expresion/expresion3.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="expresion" data-id="103" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/expresion/expresion4.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="expresion" data-id="105" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/expresion/expresion6.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="expresion" data-id="106" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/expresion/expresion8.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="expresion" data-id="108" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/expresion/expresion10.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="expresion" data-id="101" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/expresion/expresion2.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="expresion" data-id="104" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/expresion/expresion5.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="expresion" data-id="111" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/expresion/expresion7.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="expresion" data-id="107" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/expresion/expresion9.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="expresion" data-id="110" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/expresion/expresion12.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="expresion" data-id="132" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/expresion/expresion13.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-
-      <!--manos-->
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="manos" data-id="53" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/manos/manos2.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="manos" data-id="52" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/manos/manos1.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="manos" data-id="54" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/manos/manos3.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-
-      <!--Paisajes y marinas-->
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="paisaje" data-id="93" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/paisajes/paisaje1.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="paisaje" data-id="96" data-size="2hojas">
-        <div class="gallery-image">
-          <img src="assets/paisajes/paisaje4.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="paisaje" data-id="97" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/paisajes/paisaje5.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="paisaje" data-id="134" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/paisajes/paisaje8.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="paisaje" data-id="94" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/paisajes/paisaje2.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="paisaje" data-id="133" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/paisajes/paisaje6.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-
-
-      <!--Naturaleza muerta-->
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="nat" data-id="135" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/naturalezamuerta/nat1.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="nat" data-id="136" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/naturalezamuerta/nat2.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-12 col-md-8 col-lg-6 gallery-item" data-category="nat" data-id="137" data-size="hoja">
-        <div class="gallery-image">
-          <img src="assets/naturalezamuerta/nat3.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="nat" data-id="138" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/naturalezamuerta/nat4.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="nat" data-id="139" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/naturalezamuerta/nat5.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 gallery-item" data-category="nat" data-id="140" data-size="media">
-        <div class="gallery-image">
-          <img src="assets/naturalezamuerta/nat6.jpg" class="img-fluid rounded" alt="Imagen">
-          <div class="gallery-overlay">
-            <a href="#" class="ampliar-icono" title="Ampliar">&#10530;</a>
-            <a href="#" class="info-icon" title="Más información">Información</a>
-          </div>
-        </div>
-      </div>
-
-
-
-
-      
-
-
-    </div>
-  </section>
-
-  <!-- Modal for image preview -->
-  <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true" style="background-color: rgba(0, 0, 0, 0.8);">
-    <div class="modal-dialog">
-      <div class="modal-content" style="background: transparent; border: none; box-shadow: none;">
-        <div class="modal-header" style="border: none;">
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
-        </div>
-        <div class="modal-body">
-          <button class="arrow left">&#8249;</button>
-          <img id="modalImage" src="" alt="Ampliada">
-          <button class="arrow right">&#8250;</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Scroll to Top Button -->
-  <button id="scrollToTopBtn" class="btn btn-success rounded-circle" style="position: fixed; bottom: 20px; right: 20px; display: none;">
-    &uarr;
-  </button>
-
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" defer></script>
-
-  <!-- Custom JS -->
-  <script>
-
-    document.addEventListener("DOMContentLoaded", () => {
-        const scrollToTopBtn = document.getElementById("scrollToTopBtn");
-        const navbar = document.getElementById("navbar");
-        const modalImage = document.getElementById("modalImage");
-        const dropdownItems = document.querySelectorAll(".dropdown-item");
-        const galleryItems = document.querySelectorAll(".gallery-item");
-        const filterOptions = document.querySelectorAll(".filter-option");
-        const galleryIcons = document.querySelectorAll(".gallery-overlay a.ampliar-icono");
-        const infoIcons = document.querySelectorAll(".gallery-overlay a.info-icon");
-        const clearFiltersButton = document.getElementById("clearFilters");
-        const homeLink = document.querySelector(".nav-link.home-link");
-
-        let prevScrollpos = window.pageYOffset;
-        let currentIndex = 0;
-        let filteredImages = [...galleryItems];
-        let activeFilters = { category: "all", size: [] };
-
-        // Restaurar categoría seleccionada al cargar
-        const savedCategory = localStorage.getItem("selectedCategory");
-        if (savedCategory) {
-            activeFilters.category = savedCategory;
-            dropdownItems.forEach((item) => {
-                item.classList.toggle("active", item.getAttribute("data-category") === savedCategory);
-            });
-        }
-
-        // Restaurar filtros de tamaño seleccionados al cargar
-        const savedSizes = JSON.parse(localStorage.getItem("selectedSizes")) || [];
-        if (savedSizes.length > 0) {
-            activeFilters.size = savedSizes;
-            filterOptions.forEach((option) => {
-                if (savedSizes.includes(option.value)) {
-                    option.checked = true;
-                }
-            });
-        }
-
-        updateGallery();
-
-        // Scroll behavior
-        window.onscroll = () => {
-            const currentScrollPos = window.pageYOffset;
-            scrollToTopBtn.style.display = window.scrollY > 300 ? "block" : "none";
-            navbar.style.top = prevScrollpos > currentScrollPos ? "0" : "-70px";
-            prevScrollpos = currentScrollPos;
-        };
-
-        scrollToTopBtn.addEventListener("click", () => {
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        });
-
-        // Modal functionality
-        galleryIcons.forEach((icon, index) => {
-            icon.addEventListener("click", (e) => {
-                e.preventDefault();
-                currentIndex = index;
-                showImage(currentIndex);
-                new bootstrap.Modal(document.getElementById("imageModal")).show();
-            });
-        });
-
-        document.querySelector(".arrow.left").addEventListener("click", () => {
-            currentIndex = currentIndex > 0 ? currentIndex - 1 : filteredImages.length - 1;
-            showImage(currentIndex);
-        });
-
-        document.querySelector(".arrow.right").addEventListener("click", () => {
-            currentIndex = currentIndex < filteredImages.length - 1 ? currentIndex + 1 : 0;
-            showImage(currentIndex);
-        });
-
-        function showImage(index) {
-            modalImage.src = filteredImages[index].querySelector("img").src;
-        }
-
-        // Guardar categoría seleccionada al hacer clic
-        dropdownItems.forEach((item) => {
-            item.addEventListener("click", (e) => {
-                e.preventDefault();
-                const category = item.getAttribute("data-category") || "all";
-                activeFilters.category = category;
-
-                // Guardar en localStorage
-                localStorage.setItem("selectedCategory", category);
-
-                dropdownItems.forEach((i) => i.classList.remove("active"));
-                item.classList.add("active");
-                updateGallery();
-            });
-        });
-
-        // Filter functionality
-        filterOptions.forEach((option) => {
-            option.addEventListener("change", (event) => {
-                const size = option.value;
-                activeFilters.size = option.checked
-                    ? [...activeFilters.size, size]
-                    : activeFilters.size.filter((s) => s !== size);
-
-                // Guardar en localStorage
-                localStorage.setItem("selectedSizes", JSON.stringify(activeFilters.size));
-
-                updateGallery();
-            });
-        });
-
-        function updateGallery() {
-            galleryItems.forEach((galleryItem) => {
-                const itemCategories = galleryItem.getAttribute("data-category")?.split(" ") || [];
-                const itemSize = galleryItem.getAttribute("data-size") || "";
-                const matchesCategory =
-                    activeFilters.category === "all" || itemCategories.includes(activeFilters.category);
-                const matchesSize =
-                    activeFilters.size.length === 0 || activeFilters.size.includes(itemSize);
-                galleryItem.classList.toggle("hidden", !(matchesCategory && matchesSize));
-            });
-            filteredImages = Array.from(galleryItems).filter(
-                (item) => !item.classList.contains("hidden")
-            );
-        }
-
-        // Redirect to info.html
-        infoIcons.forEach((icon) => {
-            icon.addEventListener("click", (e) => {
-                e.preventDefault();
-                const id = icon.closest(".gallery-item").getAttribute("data-id");
-                window.location.href = `info.html?id=${id}`;
-            });
-        });
-
-        // Clear filters button functionality
-        clearFiltersButton.addEventListener("click", () => {
-            // Clear size filters only
-            filterOptions.forEach((option) => {
-                option.checked = false;
-            });
-
-            // Empty active size filters
-            activeFilters.size = [];
-
-            // Clear localStorage for sizes
-            localStorage.removeItem("selectedSizes");
-
-            // Update the gallery with the selected category and without size filters
-            updateGallery();
-        });
-
-        // Funcionalidad para el enlace "Home"
-        homeLink.addEventListener("click", (e) => {
-            e.preventDefault(); // Evita el comportamiento predeterminado del enlace
-
-            // Limpia los filtros de tamaño
-            filterOptions.forEach((option) => {
-                option.checked = false;
-            });
-            activeFilters.size = [];
-
-            // Limpia localStorage para los filtros de tamaño
-            localStorage.removeItem("selectedSizes");
-
-            // Selecciona la categoría "all"
-            activeFilters.category = "all";
-            localStorage.setItem("selectedCategory", "all");
-
-            // Actualiza la galería
-            updateGallery();
-
-            // Desactiva cualquier enlace activo y activa "Ver todos"
-            dropdownItems.forEach((item) => item.classList.remove("active"));
-            const viewAllItem = document.querySelector(".dropdown-item[data-category='all']");
-            if (viewAllItem) {
-                viewAllItem.classList.add("active");
-            }
-        });
-
-        // Initialize gallery on load
-        updateGallery();
+</div>
+
+<footer>© Alfredo Ravelo — Todos los derechos reservados</footer>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  CONFIG — cambia aquí para probar variantes de diseño
+// ══════════════════════════════════════════════════════
+const CARD_MODE = 'c';
+//   'c'     → título + medidas debajo de la foto, botón AR siempre visible
+//   'a'     → solo foto con overlay AR al hover/touch
+//   'b'     → overlay con Información + Ver en pared
+//   'photo' → solo foto, sin nada extra
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let allObras  = [];
+let activeCat  = 'todas';
+let activeSize = 'todas';
+let modalObra  = null;
+
+const CAT_MAP = {
+  '/flores/'          : 'flores',
+  '/rostros/'         : 'rostros',
+  '/desnudos/'        : 'desnudos',
+  '/catrinas/'        : 'catrinas',
+  '/paisajes/'        : 'paisajes',
+  '/mexico/'          : 'méxico',
+  '/expresiones/'     : 'expresión',
+  '/naturalezamuerta/': 'naturaleza muerta',
+  '/sacro/'           : 'sacro',
+  '/payasos/'         : 'payasos',
+  '/celebridades/'    : 'celebridades',
+  '/manos/'           : 'manos',
+  '/animales/'        : 'animales',
+};
+
+const SIZE_RANGES = {
+  pequeno : [0,       35*50],
+  mediano : [35*50,   50*70],
+  grande  : [50*70,   65*100],
+  mgrande : [65*100,  110*200],
+  mural   : [110*200, Infinity],
+};
+
+// ══════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════
+function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : ''; }
+
+function inferCat(path) {
+  for (const [k, v] of Object.entries(CAT_MAP))
+    if (path && path.includes(k)) return v;
+  return 'otras';
+}
+
+// Parse "50 x 70 cm" → both numbers, area, display string
+function parseM(m) {
+  if (!m) return { n1: 50, n2: 70, area: 3500, display: '50 × 70 cm' };
+  const nums = String(m).match(/\d+/g) || ['50','70'];
+  const n1 = parseInt(nums[0]);
+  const n2 = parseInt(nums[1] || nums[0]);
+  return { n1, n2, area: n1 * n2, display: `${n1} × ${n2} cm` };
+}
+
+// ══════════════════════════════════════════════════════
+//  LOAD
+// ══════════════════════════════════════════════════════
+async function init() {
+  const loadEl = document.getElementById('loading');
+  try {
+    const r = await fetch('obras.json');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const raw = await r.json();
+
+    allObras = raw.map(o => {
+      const m = parseM(o.measures);
+      return {
+        ...o,
+        cat  : o.category || inferCat(o.image || ''),
+        n1   : m.n1,
+        n2   : m.n2,
+        area : m.area,
+        dimStr: m.display,
+      };
     });
+  } catch(e) {
+    console.warn('obras.json error:', e.message);
+    // Keep empty — show "sin obras" message
+    allObras = [];
+  }
 
+  loadEl.style.display = 'none';
+  buildFilters();
+  renderGallery();
+}
 
+// ══════════════════════════════════════════════════════
+//  FILTERS
+// ══════════════════════════════════════════════════════
+function buildFilters() {
+  // Categories
+  const counts = {};
+  allObras.forEach(o => { counts[o.cat] = (counts[o.cat] || 0) + 1; });
+  const cats = ['todas', ...Object.keys(counts).sort()];
 
+  const catRow = document.getElementById('cat-row');
+  cats.forEach(cat => {
+    const n  = cat === 'todas' ? allObras.length : (counts[cat] || 0);
+    const el = document.createElement('div');
+    el.className = 'fpill' + (cat === 'todas' ? ' active' : '');
+    el.innerHTML = `${cap(cat)}<span class="fpill-count">${n}</span>`;
+    el.onclick = () => {
+      activeCat = cat;
+      catRow.querySelectorAll('.fpill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      renderGallery();
+    };
+    catRow.appendChild(el);
+  });
 
+  // Sizes
+  const SIZES = [
+    { key:'todas',   label:'Todos' },
+    { key:'pequeno', label:'Pequeño' },
+    { key:'mediano', label:'Mediano' },
+    { key:'grande',  label:'Grande' },
+    { key:'mgrande', label:'Muy grande' },
+    { key:'mural',   label:'Mural' },
+  ];
+  const sizeRow = document.getElementById('size-row');
+  SIZES.forEach(sz => {
+    const el = document.createElement('div');
+    el.className = 'fpill' + (sz.key === 'todas' ? ' active' : '');
+    el.textContent = sz.label;
+    el.onclick = () => {
+      activeSize = sz.key;
+      sizeRow.querySelectorAll('.fpill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      renderGallery();
+    };
+    sizeRow.appendChild(el);
+  });
+}
 
+// ══════════════════════════════════════════════════════
+//  FILTER LOGIC
+// ══════════════════════════════════════════════════════
+function getFiltered() {
+  return allObras.filter(o => {
+    const catOk = activeCat === 'todas' || o.cat === activeCat;
+    let sizeOk  = activeSize === 'todas';
+    if (!sizeOk) {
+      const [min, max] = SIZE_RANGES[activeSize] || [0, Infinity];
+      sizeOk = o.area > min && o.area <= max;
+    }
+    return catOk && sizeOk;
+  });
+}
 
+// ══════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════
+const BLANK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='3' height='4'%3E%3Crect width='3' height='4' fill='%23111'/%3E%3C/svg%3E";
 
-  </script>
+function renderGallery() {
+  const list    = getFiltered();
+  const gallery = document.getElementById('gallery');
+  const noRes   = document.getElementById('no-results');
+  const cnt     = document.getElementById('results-count');
+
+  gallery.innerHTML = '';
+  noRes.classList.toggle('show', list.length === 0);
+  cnt.textContent = list.length === allObras.length
+    ? `${list.length} obras`
+    : `${list.length} / ${allObras.length}`;
+
+  list.forEach(obra => gallery.appendChild(buildCard(obra)));
+}
+
+// ══════════════════════════════════════════════════════
+//  BUILD CARD
+// ══════════════════════════════════════════════════════
+function buildCard(obra) {
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  // Image — height:auto so it shows at its natural proportions
+  const img = document.createElement('img');
+  img.className = 'card-img';
+  img.src       = obra.image || '';
+  img.alt       = obra.title || '';
+  img.loading   = 'lazy';
+  img.onerror   = function() { this.onerror = null; this.src = BLANK; };
+  card.appendChild(img);
+
+  // Mode-specific UI
+  switch(CARD_MODE) {
+    case 'c': buildC(card, obra); break;
+    case 'a': buildA(card, obra); break;
+    case 'b': buildB(card, obra); break;
+    // 'photo': no extras
+  }
+  return card;
+}
+
+/* ── Mode C ── */
+function buildC(card, obra) {
+  const body = document.createElement('div');
+  body.className = 'card-body';
+
+  const link = document.createElement('a');
+  link.className   = 'card-title-link';
+  link.textContent = obra.title || '—';
+  link.href        = '#';
+  link.onclick     = e => { e.preventDefault(); openModal(obra); };
+
+  const dim = document.createElement('div');
+  dim.className   = 'card-measures';
+  dim.textContent = obra.dimStr;
+
+  const btn = document.createElement('button');
+  btn.className   = 'btn-ar-card';
+  btn.textContent = 'Ver en pared';
+  btn.onclick     = e => { e.stopPropagation(); goAR(obra.id); };
+
+  body.append(link, dim, btn);
+  card.appendChild(body);
+}
+
+/* ── Mode A ── */
+function buildA(card, obra) {
+  const ovl = document.createElement('div');
+  ovl.className = 'card-overlay';
+  const btn = document.createElement('button');
+  btn.className   = 'ov-btn ov-btn-ar';
+  btn.textContent = 'Ver en pared';
+  btn.onclick     = e => { e.stopPropagation(); goAR(obra.id); };
+  ovl.appendChild(btn);
+  card.appendChild(ovl);
+  card.onclick = () => openModal(obra);
+}
+
+/* ── Mode B ── */
+function buildB(card, obra) {
+  const ovl = document.createElement('div');
+  ovl.className = 'card-overlay';
+
+  const title = document.createElement('div');
+  title.className   = 'ov-title';
+  title.textContent = obra.title || '—';
+
+  const dim = document.createElement('div');
+  dim.className   = 'ov-dim';
+  dim.textContent = obra.dimStr;
+
+  const btns = document.createElement('div');
+  btns.className = 'ov-btns';
+
+  const btnInfo = document.createElement('button');
+  btnInfo.className   = 'ov-btn';
+  btnInfo.textContent = 'Información';
+  btnInfo.onclick     = e => { e.stopPropagation(); openModal(obra); };
+
+  const btnAR = document.createElement('button');
+  btnAR.className   = 'ov-btn ov-btn-ar';
+  btnAR.textContent = 'Ver en pared';
+  btnAR.onclick     = e => { e.stopPropagation(); goAR(obra.id); };
+
+  btns.append(btnInfo, btnAR);
+  ovl.append(title, dim, btns);
+  card.appendChild(ovl);
+}
+
+// ══════════════════════════════════════════════════════
+//  INFO MODAL
+// ══════════════════════════════════════════════════════
+function openModal(obra) {
+  modalObra = obra;
+  document.getElementById('info-img').src        = obra.image || '';
+  document.getElementById('info-img').alt        = obra.title || '';
+  document.getElementById('info-name').textContent = obra.title || '—';
+  document.getElementById('info-meta').textContent =
+    [obra.dimStr, obra.technique].filter(Boolean).join('  ·  ');
+
+  const award = document.getElementById('info-award');
+  award.textContent = obra.award ? ('🏆 ' + obra.award) : '';
+  award.classList.toggle('show', !!obra.award);
+
+  document.getElementById('info-desc').textContent = obra.description || '';
+  document.getElementById('info-modal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('info-modal').classList.remove('show');
+  document.body.style.overflow = '';
+  modalObra = null;
+}
+
+document.getElementById('info-close').onclick = closeModal;
+document.getElementById('info-modal').onclick = e => {
+  if (e.target === document.getElementById('info-modal')) closeModal();
+};
+document.getElementById('info-ar').onclick = () => { if (modalObra) goAR(modalObra.id); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ══════════════════════════════════════════════════════
+//  GO TO AR
+// ══════════════════════════════════════════════════════
+function goAR(id) {
+  if (id !== undefined && id !== null) localStorage.setItem('ar_preselect', id);
+  window.location.href = 'preview.html';
+}
+
+// ══════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════
+init();
+</script>
 </body>
 </html>

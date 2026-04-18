@@ -258,7 +258,7 @@
     }
     /* Collapsed: only the handle bar is visible (~52px) */
     #bottom-panel.collapsed {
-      transform: translateY(calc(100% - 52px));
+      transform: translateY(calc(100% - 48px));
     }
 
     /* Handle */
@@ -325,7 +325,7 @@
     #cat-pills::-webkit-scrollbar { display: none; }
     .cat-pill {
       flex-shrink: 0; padding: 5px 14px;
-      border-radius: 2px; font-size: 11px;
+      border-radius: 8px; font-size: 11px;
       cursor: pointer; font-weight: 300;
       border: 1px solid rgba(255,255,255,0.1);
       color: rgba(255,255,255,0.4);
@@ -914,7 +914,10 @@ function posA4() {
   const panelH = panelOpen ? bottomPanel.offsetHeight + 20 : 60;
   const cx     = window.innerWidth / 2;
   const cy     = (window.innerHeight - panelH) / 2;
-  a4Ref.style.cssText = `display:block;width:${rw}px;height:${rh}px;left:${cx - rw/2}px;top:${cy - rh/2}px;`;
+  a4Ref.style.width  = rw + 'px';
+  a4Ref.style.height = rh + 'px';
+  a4Ref.style.left   = (cx - rw/2) + 'px';
+  a4Ref.style.top    = (cy - rh/2) + 'px';
 }
 
 // ══════════════════════════════════════════════════════
@@ -1132,6 +1135,23 @@ $('start-btn').addEventListener('click', async () => {
     });
     video.srcObject = stream;
     permScreen.classList.remove('show');
+
+    // ── Preselect: llegamos desde "Ver en pared" en la galería ──
+    const preId = localStorage.getItem('ar_preselect');
+    if (preId) {
+      localStorage.removeItem('ar_preselect');
+      const obra = obras.find(o => String(o.id) === String(preId));
+      if (obra) {
+        // Build a temporary thumb element to reuse selectObra flow
+        const tmp = document.createElement('div');
+        tmp.className = 'thumb-card';
+        selectObra(obra, tmp);
+        showInfo(`${obra.title} — ${pm(obra.measures).w > pm(obra.measures).h ? pm(obra.measures).w : pm(obra.measures).h < pm(obra.measures).w ? pm(obra.measures).h : pm(obra.measures).w} cm`, 2800);
+        // Don't show instructions — go straight to AR
+        return;
+      }
+    }
+
     localStorage.getItem(SEEN_KEY) ? selectHint.classList.add('show') : instrOvl.classList.add('show');
     if (localStorage.getItem(CALIB_KEY)) showInfo('Escala restaurada — puedes recalibrar con A4 o 10cm', 3000);
   } catch (err) {
