@@ -5,275 +5,336 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Alfredo Ravelo — Acuarelas</title>
   <style>
-
     /* ══════════════════════════════════════════════
-       CARD_MODE — cambia este valor para probar:
-       'c'     → título + medidas debajo, botón AR siempre visible
-       'a'     → solo botón AR en overlay al hover/touch
-       'b'     → overlay con info + botón AR al hover/touch
-       'photo' → solo foto, sin texto ni botones
+       RESET & BASE
     ══════════════════════════════════════════════ */
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #000;
-      --bg2: #0a0a0a;
-      --border: rgba(255,255,255,0.07);
-      --text: #fff;
-      --text-dim: rgba(255,255,255,0.4);
-      --text-faint: rgba(255,255,255,0.2);
-      --gap: 8px;
+      --bg:      #000;
+      --border:  rgba(255,255,255,0.07);
+      --text:    #fff;
+      --dim:     rgba(255,255,255,0.38);
+      --faint:   rgba(255,255,255,0.16);
+      --gap:     10px;
+      /* Horizontal page padding — scales with viewport */
+      --px: clamp(12px, 3.5vw, 48px);
     }
 
-    html, body {
+    html { background: var(--bg); }
+    body {
       background: var(--bg);
       color: var(--text);
       font-family: 'Helvetica Neue', Arial, sans-serif;
-      min-height: 100%;
+      min-height: 100vh;
     }
 
-    /* ── Navbar ───────────────────────────────── */
+    /* ══════════════════════════════════════════════
+       NAVBAR
+    ══════════════════════════════════════════════ */
     .navbar {
       position: sticky; top: 0;
-      background: rgba(0,0,0,0.96);
+      height: 58px;
+      background: rgba(0,0,0,0.97);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
       z-index: 100;
-      padding: 0 20px;
-      height: 54px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      padding: 0 var(--px);
+      gap: 16px;
     }
-    .navbar-brand {
+
+    .brand {
       font-family: 'Times New Roman', Georgia, serif;
-      font-size: 1.3rem;
+      font-size: clamp(1rem, 2.2vw, 1.45rem);
       font-weight: normal;
       color: var(--text);
       letter-spacing: 1px;
       text-decoration: none;
-      white-space: nowrap;
       flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
+
+    /* Logo image: visible on tablet+ */
+    .brand-logo {
+      height: clamp(32px, 5vw, 44px);
+      width: auto;
+      display: block;
+      object-fit: contain;
+    }
+    @media (max-width: 540px) {
+      .brand-logo { display: none; }
+    }
+
     .nav-links {
       display: flex;
-      gap: 16px;
       align-items: center;
+      gap: clamp(10px, 2vw, 20px);
       flex-wrap: nowrap;
     }
+
     .nav-link {
-      color: var(--text-dim);
-      font-size: 10px;
+      font-size: clamp(9px, 1.2vw, 13px);
       font-weight: 300;
-      letter-spacing: 2px;
+      letter-spacing: clamp(1px, 0.3vw, 2.5px);
       text-transform: uppercase;
+      color: var(--dim);
       text-decoration: none;
-      transition: color 0.2s;
       white-space: nowrap;
+      transition: color 0.2s;
     }
     .nav-link:hover, .nav-link.active { color: var(--text); }
+
     .nav-link-ar {
-      border: 1px solid rgba(255,255,255,0.18);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid rgba(255,255,255,0.16);
       padding: 5px 12px;
       border-radius: 2px;
-      color: rgba(255,255,255,0.65);
+      color: rgba(255,255,255,0.6);
       transition: all 0.2s;
     }
-    .nav-link-ar:hover { border-color: rgba(255,255,255,0.45); color: var(--text); background: rgba(255,255,255,0.05); }
+    .nav-link-ar:hover {
+      border-color: rgba(255,255,255,0.4);
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+    }
+    /* Hide "Ver en pared" text label on very small phones, keep icon */
+    @media (max-width: 360px) {
+      .nav-link-ar .ar-label { display: none; }
+    }
 
-    /* ── Filter bar ───────────────────────────── */
+    /* ══════════════════════════════════════════════
+       FILTER BAR
+    ══════════════════════════════════════════════ */
     #filter-bar {
       position: sticky;
-      top: 54px;
-      background: rgba(0,0,0,0.94);
+      top: 58px;
+      z-index: 99;
+      background: rgba(0,0,0,0.97);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
-      z-index: 99;
-      padding: 8px 16px;
+    }
+
+    #filter-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px var(--px);
+      gap: 12px;
+    }
+
+    #filter-toggle {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.14);
+      color: var(--dim);
+      padding: 6px 14px;
+      border-radius: 2px;
+      font-size: clamp(9px, 1.1vw, 11px);
+      font-weight: 300;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    #filter-toggle:hover { color: var(--text); border-color: rgba(255,255,255,0.3); }
+    #filter-toggle.open  { color: var(--text); border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.05); }
+
+    #filter-arrow {
+      font-size: 8px;
+      transition: transform 0.25s;
+      display: inline-block;
+    }
+    #filter-toggle.open #filter-arrow { transform: rotate(180deg); }
+
+    #results-count {
+      font-size: clamp(9px, 1.1vw, 11px);
+      font-weight: 300;
+      color: var(--faint);
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    #filter-panel {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.3s cubic-bezier(.4,0,.2,1);
+    }
+    #filter-panel.open { max-height: 300px; }
+
+    #filter-inner {
+      padding: 0 var(--px) 12px;
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      gap: 10px;
+    }
+
+    .filter-group-label {
+      font-size: 9px;
+      font-weight: 300;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 2px;
     }
 
     .pill-row {
       display: flex;
       gap: 5px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 1px; /* prevent clipping on scroll */
+      flex-wrap: wrap;
     }
-    .pill-row::-webkit-scrollbar { display: none; }
 
     .fpill {
-      flex-shrink: 0;
       padding: 4px 12px;
       border-radius: 20px;
-      font-size: 11px;
+      font-size: clamp(10px, 1.1vw, 12px);
       font-weight: 300;
-      letter-spacing: 0.3px;
       cursor: pointer;
       border: 1px solid rgba(255,255,255,0.1);
-      color: var(--text-dim);
+      color: var(--dim);
       background: transparent;
       transition: all 0.15s;
       white-space: nowrap;
       user-select: none;
+      letter-spacing: 0.2px;
     }
     .fpill:hover  { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.25); }
     .fpill.active { color: var(--text); border-color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.08); }
-    .fpill-count  { font-size: 9px; opacity: 0.4; margin-left: 3px; }
+    .fpill-n { font-size: 9px; opacity: 0.4; margin-left: 3px; }
 
-    #results-count {
-      font-size: 10px;
-      font-weight: 300;
-      color: var(--text-faint);
-      letter-spacing: 0.5px;
-      padding: 0 2px;
+    #active-indicator {
+      display: none;
+      width: 6px; height: 6px;
+      background: rgba(255,255,255,0.6);
+      border-radius: 50%;
+      flex-shrink: 0;
     }
+    #active-indicator.show { display: block; }
 
-    /* ── Gallery container ────────────────────── */
+    /* ══════════════════════════════════════════════
+       GALLERY
+    ══════════════════════════════════════════════ */
     #gallery-wrap {
-      padding: var(--gap);
+      padding: var(--gap) var(--px);
+      max-width: 1600px;
+      margin: 0 auto;
     }
 
-    /* Masonry with CSS columns — simplest robust approach */
     #gallery {
-      columns: 3;
-      column-gap: var(--gap);
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--gap);
     }
-    @media (max-width: 700px)  { #gallery { columns: 2; } }
-    @media (max-width: 380px)  { #gallery { columns: 2; --gap: 5px; } }
+
+    .gi-large  { grid-column: span 6; }
+    .gi-medium { grid-column: span 4; }
+    .gi-small  { grid-column: span 3; }
+
+    @media (max-width: 900px) {
+      .gi-large  { grid-column: span 12; }
+      .gi-medium { grid-column: span 6;  }
+      .gi-small  { grid-column: span 6;  }
+    }
+
+    @media (max-width: 540px) {
+      :root { --gap: 6px; }
+      .gi-large, .gi-medium { grid-column: span 12; }
+      .gi-small { grid-column: span 6; }
+    }
 
     /* ── Card ─────────────────────────────────── */
-    .card {
-      break-inside: avoid;
-      margin-bottom: var(--gap);
+    .card { display: flex; flex-direction: column; }
+
+    .card-img-wrap {
       position: relative;
-      background: var(--bg2);
       overflow: hidden;
       cursor: pointer;
-      display: block; /* important: block, not flex */
+      border-radius: 6px;  /* rounded corners like original */
     }
 
-    /* Image — width 100%, height auto → natural proportions */
     .card-img {
       display: block;
       width: 100%;
-      height: auto;         /* KEY FIX: lets image define its own height */
-      object-fit: cover;
-      transition: transform 0.4s ease;
+      height: auto;
+      border-radius: 6px;
+      transition: transform 0.3s ease;
     }
-    .card:hover .card-img { transform: scale(1.04); }
 
-    /* Mode C: info below image */
-    .card-body {
-      padding: 8px 10px 10px;
+    @media (hover: hover) {
+      .card-img-wrap:hover .card-img { transform: scale(1.04); }
     }
-    .card-title-link {
-      display: block;
-      font-family: 'Times New Roman', Georgia, serif;
-      font-size: 12px;
-      font-weight: normal;
-      color: rgba(255,255,255,0.68);
-      line-height: 1.4;
-      margin-bottom: 2px;
-      text-decoration: none;
-    }
-    .card-title-link:hover { color: var(--text); }
-    .card-measures {
-      font-size: 9px;
-      font-weight: 300;
-      color: var(--text-faint);
-      letter-spacing: 0.3px;
-      margin-bottom: 7px;
-    }
-    .btn-ar-card {
-      display: block;
-      width: 100%;
-      padding: 6px 0;
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.15);
-      color: rgba(255,255,255,0.5);
-      font-size: 9px;
-      font-weight: 300;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      cursor: pointer;
-      border-radius: 2px;
-      transition: all 0.18s;
-      text-align: center;
-    }
-    .btn-ar-card:hover { border-color: rgba(255,255,255,0.4); color: var(--text); background: rgba(255,255,255,0.05); }
 
-    /* Modes A & B: overlay */
+    /* ── Overlay (desktop hover only) ─────────── */
     .card-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.58);
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.62);
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
-      padding: 10px;
-      gap: 5px;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
       opacity: 0;
-      transition: opacity 0.22s;
+      transition: opacity 0.3s ease;
+      border-radius: 6px;
     }
-    /* Touch devices: always show overlay */
-    @media (hover: none) { .card-overlay { opacity: 1; } }
-    .card:hover .card-overlay { opacity: 1; }
 
-    .ov-title {
-      font-family: 'Times New Roman', Georgia, serif;
-      font-size: 11px;
-      color: rgba(255,255,255,0.88);
-      line-height: 1.3;
+    @media (hover: hover) {
+      .card-img-wrap:hover .card-overlay { opacity: 1; }
     }
-    .ov-dim {
-      font-size: 9px;
-      color: rgba(255,255,255,0.4);
+    @media (hover: none) {
+      .card-overlay { display: none; }
     }
-    .ov-btns { display: flex; gap: 5px; margin-top: 2px; }
+
     .ov-btn {
-      flex: 1;
-      padding: 6px 4px;
-      font-size: 9px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.28);
+      color: rgba(255,255,255,0.85);
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 10px;
       font-weight: 300;
-      letter-spacing: 1px;
+      letter-spacing: 2px;
       text-transform: uppercase;
+      padding: 8px 22px;
       cursor: pointer;
       border-radius: 2px;
-      text-align: center;
-      border: 1px solid rgba(255,255,255,0.2);
-      background: rgba(255,255,255,0.1);
-      color: rgba(255,255,255,0.75);
       transition: all 0.15s;
+      text-decoration: none;
+      display: inline-block;
+      min-width: 130px;
+      text-align: center;
     }
-    .ov-btn:hover { background: rgba(255,255,255,0.22); color: var(--text); }
-    .ov-btn-ar {
-      border-color: rgba(255,255,255,0.35);
-      background: rgba(255,255,255,0.15);
+    .ov-btn:hover {
+      background: rgba(255,255,255,0.14);
+      border-color: rgba(255,255,255,0.55);
+      color: #fff;
     }
 
-    /* ── Loading ──────────────────────────────── */
+    /* ── Loading / no-results ─────────────────── */
     #loading {
+      grid-column: span 12;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 80px 0;
       gap: 12px;
-      color: var(--text-faint);
+      color: var(--faint);
       font-size: 10px;
       font-weight: 300;
       letter-spacing: 2px;
       text-transform: uppercase;
     }
     .spin {
-      width: 18px; height: 18px;
+      width: 16px; height: 16px;
       border: 1px solid rgba(255,255,255,0.1);
       border-top-color: rgba(255,255,255,0.5);
       border-radius: 50%;
@@ -283,177 +344,253 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     #no-results {
+      grid-column: span 12;
       display: none;
       text-align: center;
       padding: 60px 20px;
-      color: var(--text-faint);
+      color: var(--faint);
       font-size: 12px;
       font-weight: 300;
     }
     #no-results.show { display: block; }
 
-    /* ── Info modal (bottom sheet) ────────────── */
-    #info-modal {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.85);
-      z-index: 200;
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-    }
-    #info-modal.show { display: flex; }
-
-    #info-sheet {
-      background: #0d0d0d;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-bottom: none;
-      border-radius: 12px 12px 0 0;
-      width: 100%;
-      max-width: 540px;
-      max-height: 90vh;
-      overflow-y: auto;
-      position: relative;
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(.4,0,.2,1);
-      padding-bottom: env(safe-area-inset-bottom, 0);
-    }
-    #info-modal.show #info-sheet { transform: translateY(0); }
-
-    #info-handle {
-      width: 36px; height: 4px;
-      background: rgba(255,255,255,0.14);
-      border-radius: 2px;
-      margin: 12px auto 0;
-    }
-    #info-close {
-      position: absolute; top: 14px; right: 16px;
-      width: 28px; height: 28px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: rgba(255,255,255,0.5);
-      border-radius: 50%;
-      font-size: 14px;
+    /* ══════════════════════════════════════════════
+       SCROLL TO TOP BUTTON
+    ══════════════════════════════════════════════ */
+    #scroll-top {
+      position: fixed;
+      bottom: 24px;
+      right: 20px;
+      width: 44px;
+      height: 44px;
+      background: rgba(30,30,30,0.92);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.55);
+      font-size: 20px;
       cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
-    #info-close:hover { color: var(--text); border-color: rgba(255,255,255,0.3); }
+    #scroll-top.visible { display: flex; }
+    #scroll-top:hover {
+      background: rgba(60,60,60,0.95);
+      border-color: rgba(255,255,255,0.4);
+      color: #fff;
+    }
 
-    #info-img-wrap {
-      width: 100%;
-      margin-top: 14px;
-      background: #111;
-      overflow: hidden;
-      max-height: 42vh;
-      display: flex;
+    /* ══════════════════════════════════════════════
+       LIGHTBOX
+    ══════════════════════════════════════════════ */
+    #lightbox {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 300;
+      display: none;
       align-items: center;
       justify-content: center;
     }
-    #info-img-wrap img {
-      width: 100%;
-      height: auto;
-      max-height: 42vh;
+    #lightbox.show { display: flex; }
+
+    #lb-img {
+      max-width: 88vw;
+      max-height: 88vh;
       object-fit: contain;
       display: block;
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 4px;
     }
 
-    #info-body { padding: 18px 22px 24px; }
-    #info-name {
+    .lb-arrow {
+      position: absolute;
+      top: 50%; transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.35);
+      font-size: 52px;
+      font-weight: 100;
+      cursor: pointer;
+      padding: 16px 20px;
+      line-height: 1;
+      transition: color 0.15s;
+      user-select: none;
+    }
+    .lb-arrow:hover { color: rgba(255,255,255,0.85); }
+    #lb-left  { left: 4px; }
+    #lb-right { right: 4px; }
+
+    #lb-close {
+      position: absolute; top: 16px; right: 20px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.55);
+      font-size: 18px;
+      cursor: pointer;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    #lb-close:hover { color: #fff; border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.1); }
+
+    /* ══════════════════════════════════════════════
+       INSTRUCTIONS OVERLAY (first visit)
+    ══════════════════════════════════════════════ */
+    #intro-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 400;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    #intro-overlay.hidden { display: none; }
+
+    #intro-card {
+      background: #111;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 36px 28px 28px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+
+    #intro-logo {
+      height: clamp(52px, 10vw, 72px);
+      width: auto;
+      display: block;
+      margin: 0 auto 18px;
+      opacity: 0.9;
+    }
+
+    #intro-title {
       font-family: 'Times New Roman', Georgia, serif;
-      font-size: 20px; font-weight: normal;
-      color: var(--text); margin-bottom: 6px; line-height: 1.3;
+      font-size: clamp(14px, 3vw, 17px);
+      font-weight: normal;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 18px;
     }
-    #info-meta {
-      font-size: 11px; font-weight: 300;
-      color: var(--text-dim); margin-bottom: 12px; line-height: 1.6;
+
+    #intro-msg {
+      color: rgba(255,255,255,0.6);
+      font-size: clamp(13px, 1.8vw, 15px);
+      font-weight: 300;
+      line-height: 1.75;
+      margin-bottom: 26px;
     }
-    #info-award {
-      font-size: 11px; color: rgba(255,255,255,0.45);
-      font-style: italic; margin-bottom: 12px; display: none;
-    }
-    #info-award.show { display: block; }
-    #info-desc {
-      font-size: 13px; font-weight: 300;
-      color: rgba(255,255,255,0.5); line-height: 1.75; margin-bottom: 20px;
-    }
-    #info-ar {
-      display: block; width: 100%;
-      padding: 13px;
+
+    #intro-ok {
       background: transparent;
       border: 1px solid rgba(255,255,255,0.22);
-      color: rgba(255,255,255,0.7);
-      font-size: 10px; font-weight: 300;
-      letter-spacing: 2px; text-transform: uppercase;
-      cursor: pointer; border-radius: 2px;
-      transition: all 0.2s; text-align: center;
+      color: rgba(255,255,255,0.55);
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: clamp(9px, 1.1vw, 11px);
+      font-weight: 300;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 11px 36px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.2s;
     }
-    #info-ar:hover { border-color: rgba(255,255,255,0.5); color: var(--text); background: rgba(255,255,255,0.04); }
+    #intro-ok:hover { color: #fff; border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.04); }
 
-    /* ── Footer ───────────────────────────────── */
+    /* ══════════════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════════════ */
     footer {
       border-top: 1px solid var(--border);
-      padding: 20px;
+      padding: 20px var(--px);
       text-align: center;
-      font-size: 9px; font-weight: 300;
-      color: var(--text-faint);
-      letter-spacing: 2px; text-transform: uppercase;
+      font-size: clamp(8px, 1vw, 10px);
+      font-weight: 300;
+      color: var(--faint);
+      letter-spacing: 2px;
+      text-transform: uppercase;
     }
   </style>
 </head>
 <body>
 
-<!-- Navbar -->
+<!-- NAVBAR -->
 <nav class="navbar">
-  <a href="index.html" class="navbar-brand">Alfredo Ravelo</a>
+  <a href="index.html" class="brand">
+    <img class="brand-logo" src="assets/logo.png" alt="Alfredo Ravelo">
+    Alfredo Ravelo
+  </a>
   <div class="nav-links">
     <a href="index.html" class="nav-link active">Galería</a>
+    <a href="size.html" class="nav-link">Tamaños</a>
     <a href="preview.html" class="nav-link nav-link-ar">
-      <svg width="12" height="10" viewBox="0 0 28 24" fill="none" stroke="currentColor"
-           stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
-           style="display:inline-block;vertical-align:middle;margin-right:5px;margin-top:-1px">
+      <svg width="13" height="11" viewBox="0 0 28 24" fill="none" stroke="currentColor"
+           stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
         <path d="M1 7C1 5.9 1.9 5 3 5h2.4L7 2h14l1.6 3H25c1.1 0 2 .9 2 2v13c0 1.1-.9 2-2 2H3c-1.1 0-2-.9-2-2V7z"/>
         <circle cx="14" cy="13" r="4"/>
-      </svg>Ver en pared
+      </svg>
+      <span class="ar-label">Ver en pared</span>
     </a>
   </div>
 </nav>
 
-<!-- Filter bar -->
+<!-- FILTER BAR -->
 <div id="filter-bar">
-  <div class="pill-row" id="cat-row"></div>
-  <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;min-width:0;">
-    <div class="pill-row" id="size-row" style="flex:1;min-width:0;"></div>
+  <div id="filter-top">
+    <button id="filter-toggle">
+      <span id="active-indicator"></span>
+      Filtros
+      <span id="filter-arrow">▼</span>
+    </button>
     <div id="results-count"></div>
+  </div>
+  <div id="filter-panel">
+    <div id="filter-inner">
+      <div>
+        <div class="filter-group-label">Categoría</div>
+        <div class="pill-row" id="cat-row"></div>
+      </div>
+      <div>
+        <div class="filter-group-label">Tamaño</div>
+        <div class="pill-row" id="size-row"></div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Gallery -->
+<!-- GALLERY -->
 <div id="gallery-wrap">
-  <div id="loading"><div class="spin"></div>Cargando</div>
-  <div id="gallery"></div>
-  <div id="no-results">Sin obras en esta selección</div>
+  <div id="gallery">
+    <div id="loading"><div class="spin"></div>Cargando</div>
+    <div id="no-results">Sin obras en esta selección</div>
+  </div>
 </div>
 
-<!-- Info modal -->
-<div id="info-modal">
-  <div id="info-sheet">
-    <div id="info-handle"></div>
-    <button id="info-close">×</button>
-    <div id="info-img-wrap"><img id="info-img" src="" alt=""></div>
-    <div id="info-body">
-      <div id="info-name"></div>
-      <div id="info-meta"></div>
-      <div id="info-award"></div>
-      <div id="info-desc"></div>
-      <button id="info-ar">
-        <svg width="12" height="10" viewBox="0 0 28 24" fill="none" stroke="currentColor"
-             stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
-             style="display:inline-block;vertical-align:middle;margin-right:6px;margin-top:-2px">
-          <path d="M1 7C1 5.9 1.9 5 3 5h2.4L7 2h14l1.6 3H25c1.1 0 2 .9 2 2v13c0 1.1-.9 2-2 2H3c-1.1 0-2-.9-2-2V7z"/>
-          <circle cx="14" cy="13" r="4"/>
-        </svg>Ver en pared
-      </button>
-    </div>
+<!-- SCROLL TO TOP -->
+<button id="scroll-top" aria-label="Volver al inicio">&#8679;</button>
+
+<!-- LIGHTBOX -->
+<div id="lightbox">
+  <button id="lb-close">×</button>
+  <button class="lb-arrow" id="lb-left">&#8249;</button>
+  <img id="lb-img" src="" alt="">
+  <button class="lb-arrow" id="lb-right">&#8250;</button>
+</div>
+
+<!-- INSTRUCTIONS OVERLAY (shown once on first visit) -->
+<div id="intro-overlay" class="hidden">
+  <div id="intro-card">
+    <img id="intro-logo" src="assets/logo.png" alt="Alfredo Ravelo">
+    <div id="intro-title">Alfredo Ravelo</div>
+    <div id="intro-msg"></div>
+    <button id="intro-ok">Entendido</button>
   </div>
 </div>
 
@@ -461,22 +598,26 @@
 
 <script>
 // ══════════════════════════════════════════════════════
-//  CONFIG — cambia aquí para probar variantes de diseño
+//  LAYOUT OVERRIDES — IDs that display as large (gi-large, 50% width)
+//  Matches the original hand-curated HTML layout exactly
 // ══════════════════════════════════════════════════════
-const CARD_MODE = 'c';
-//   'c'     → título + medidas debajo de la foto, botón AR siempre visible
-//   'a'     → solo foto con overlay AR al hover/touch
-//   'b'     → overlay con Información + Ver en pared
-//   'photo' → solo foto, sin nada extra
+const LARGE_IDS = new Set([
+  1, 2, 4, 6, 125, 129, 130,               // flores
+  69,                                       // celebridades
+  43, 47, 50, 51,                           // payasos
+  57, 58, 59, 61, 62, 63, 65, 141, 142, 143, // méxico
+  12,                                       // desnudos
+  14, 24, 27, 31, 35, 36, 37, 42,          // rostros
+  73, 76, 77, 78, 79, 81, 85, 86, 114, 120, // animales
+  101, 104, 107, 110, 111, 132,             // expresión
+  52, 54,                                   // manos
+  93, 96, 97, 134,                          // paisajes
+  135, 136, 137,                            // naturaleza muerta
+]);
 
 // ══════════════════════════════════════════════════════
-//  STATE
+//  DATA MAPS
 // ══════════════════════════════════════════════════════
-let allObras  = [];
-let activeCat  = 'todas';
-let activeSize = 'todas';
-let modalObra  = null;
-
 const CAT_MAP = {
   '/flores/'          : 'flores',
   '/rostros/'         : 'rostros',
@@ -484,6 +625,7 @@ const CAT_MAP = {
   '/catrinas/'        : 'catrinas',
   '/paisajes/'        : 'paisajes',
   '/mexico/'          : 'méxico',
+  '/expresion/'       : 'expresión',
   '/expresiones/'     : 'expresión',
   '/naturalezamuerta/': 'naturaleza muerta',
   '/sacro/'           : 'sacro',
@@ -493,13 +635,24 @@ const CAT_MAP = {
   '/animales/'        : 'animales',
 };
 
-const SIZE_RANGES = {
-  pequeno : [0,       35*50],
-  mediano : [35*50,   50*70],
-  grande  : [50*70,   65*100],
-  mgrande : [65*100,  110*200],
-  mural   : [110*200, Infinity],
-};
+function areaToGridClass(area) {
+  if (area <= 3600) return 'gi-small';
+  if (area <= 7000) return 'gi-medium';
+  return 'gi-large';
+}
+
+function layoutForId(id, area) {
+  if (LARGE_IDS.has(id)) return 'gi-large';
+  return areaToGridClass(area);
+}
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let allObras   = [];
+let activeCat  = 'todas';
+let activeSize = 'todas';
+let filterOpen = false;
 
 // ══════════════════════════════════════════════════════
 //  HELPERS
@@ -507,57 +660,64 @@ const SIZE_RANGES = {
 function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : ''; }
 
 function inferCat(path) {
+  if (!path) return 'otras';
   for (const [k, v] of Object.entries(CAT_MAP))
-    if (path && path.includes(k)) return v;
+    if (path.includes(k)) return v;
   return 'otras';
 }
 
-// Parse "50 x 70 cm" → both numbers, area, display string
 function parseM(m) {
   if (!m) return { n1: 50, n2: 70, area: 3500, display: '50 × 70 cm' };
-  const nums = String(m).match(/\d+/g) || ['50','70'];
+  const nums = String(m).match(/\d+/g) || ['50', '70'];
   const n1 = parseInt(nums[0]);
   const n2 = parseInt(nums[1] || nums[0]);
   return { n1, n2, area: n1 * n2, display: `${n1} × ${n2} cm` };
 }
 
 // ══════════════════════════════════════════════════════
-//  LOAD
+//  LOAD obras.json
 // ══════════════════════════════════════════════════════
 async function init() {
-  const loadEl = document.getElementById('loading');
   try {
     const r = await fetch('obras.json');
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     const raw = await r.json();
-
     allObras = raw.map(o => {
       const m = parseM(o.measures);
       return {
         ...o,
-        cat  : o.category || inferCat(o.image || ''),
-        n1   : m.n1,
-        n2   : m.n2,
-        area : m.area,
-        dimStr: m.display,
+        cat    : o.category || inferCat(o.image || ''),
+        n1     : m.n1,
+        n2     : m.n2,
+        area   : m.area,
+        dimStr : m.display,
+        gridCls: layoutForId(o.id, m.area),
       };
     });
   } catch(e) {
-    console.warn('obras.json error:', e.message);
-    // Keep empty — show "sin obras" message
+    console.warn('obras.json:', e.message);
     allObras = [];
   }
 
-  loadEl.style.display = 'none';
+  document.getElementById('loading').style.display = 'none';
   buildFilters();
   renderGallery();
+  showIntro();
 }
 
 // ══════════════════════════════════════════════════════
-//  FILTERS
+//  FILTER TOGGLE
+// ══════════════════════════════════════════════════════
+document.getElementById('filter-toggle').addEventListener('click', () => {
+  filterOpen = !filterOpen;
+  document.getElementById('filter-toggle').classList.toggle('open', filterOpen);
+  document.getElementById('filter-panel').classList.toggle('open', filterOpen);
+});
+
+// ══════════════════════════════════════════════════════
+//  BUILD FILTERS
 // ══════════════════════════════════════════════════════
 function buildFilters() {
-  // Categories
   const counts = {};
   allObras.forEach(o => { counts[o.cat] = (counts[o.cat] || 0) + 1; });
   const cats = ['todas', ...Object.keys(counts).sort()];
@@ -565,45 +725,61 @@ function buildFilters() {
   const catRow = document.getElementById('cat-row');
   cats.forEach(cat => {
     const n  = cat === 'todas' ? allObras.length : (counts[cat] || 0);
-    const el = document.createElement('div');
-    el.className = 'fpill' + (cat === 'todas' ? ' active' : '');
-    el.innerHTML = `${cap(cat)}<span class="fpill-count">${n}</span>`;
+    const el = makePill(cap(cat), n, cat === 'todas');
     el.onclick = () => {
       activeCat = cat;
       catRow.querySelectorAll('.fpill').forEach(p => p.classList.remove('active'));
       el.classList.add('active');
+      updateIndicator();
       renderGallery();
     };
     catRow.appendChild(el);
   });
 
-  // Sizes
   const SIZES = [
-    { key:'todas',   label:'Todos' },
-    { key:'pequeno', label:'Pequeño' },
-    { key:'mediano', label:'Mediano' },
-    { key:'grande',  label:'Grande' },
-    { key:'mgrande', label:'Muy grande' },
-    { key:'mural',   label:'Mural' },
+    { key: 'todas',   label: 'Todos' },
+    { key: 'pequeno', label: 'Pequeño',    tip: '35 × 50' },
+    { key: 'mediano', label: 'Mediano',    tip: '50 × 70' },
+    { key: 'grande',  label: 'Grande',     tip: '65 × 100' },
+    { key: 'mgrande', label: 'Muy grande', tip: '85–110 cm' },
   ];
   const sizeRow = document.getElementById('size-row');
   SIZES.forEach(sz => {
-    const el = document.createElement('div');
-    el.className = 'fpill' + (sz.key === 'todas' ? ' active' : '');
-    el.textContent = sz.label;
+    const el = makePill(sz.label, null, sz.key === 'todas');
+    el.title = sz.tip || '';
     el.onclick = () => {
       activeSize = sz.key;
       sizeRow.querySelectorAll('.fpill').forEach(p => p.classList.remove('active'));
       el.classList.add('active');
+      updateIndicator();
       renderGallery();
     };
     sizeRow.appendChild(el);
   });
 }
 
+function makePill(label, count, active) {
+  const el = document.createElement('div');
+  el.className = 'fpill' + (active ? ' active' : '');
+  el.innerHTML = label + (count !== null ? `<span class="fpill-n">${count}</span>` : '');
+  return el;
+}
+
+function updateIndicator() {
+  const on = activeCat !== 'todas' || activeSize !== 'todas';
+  document.getElementById('active-indicator').classList.toggle('show', on);
+}
+
 // ══════════════════════════════════════════════════════
 //  FILTER LOGIC
 // ══════════════════════════════════════════════════════
+const SIZE_RANGES = {
+  pequeno: [0,    1800],
+  mediano: [1800, 3600],
+  grande:  [3600, 7000],
+  mgrande: [7000, Infinity],
+};
+
 function getFiltered() {
   return allObras.filter(o => {
     const catOk = activeCat === 'todas' || o.cat === activeCat;
@@ -617,7 +793,7 @@ function getFiltered() {
 }
 
 // ══════════════════════════════════════════════════════
-//  RENDER
+//  RENDER GALLERY
 // ══════════════════════════════════════════════════════
 const BLANK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='3' height='4'%3E%3Crect width='3' height='4' fill='%23111'/%3E%3C/svg%3E";
 
@@ -627,11 +803,12 @@ function renderGallery() {
   const noRes   = document.getElementById('no-results');
   const cnt     = document.getElementById('results-count');
 
-  gallery.innerHTML = '';
+  gallery.querySelectorAll('.card').forEach(c => c.remove());
+
   noRes.classList.toggle('show', list.length === 0);
   cnt.textContent = list.length === allObras.length
     ? `${list.length} obras`
-    : `${list.length} / ${allObras.length}`;
+    : `${list.length} / ${allObras.length} obras`;
 
   list.forEach(obra => gallery.appendChild(buildCard(obra)));
 }
@@ -641,135 +818,134 @@ function renderGallery() {
 // ══════════════════════════════════════════════════════
 function buildCard(obra) {
   const card = document.createElement('div');
-  card.className = 'card';
+  card.className = `card ${obra.gridCls}`;
 
-  // Image — height:auto so it shows at its natural proportions
+  const wrap = document.createElement('div');
+  wrap.className = 'card-img-wrap';
+
   const img = document.createElement('img');
   img.className = 'card-img';
   img.src       = obra.image || '';
   img.alt       = obra.title || '';
   img.loading   = 'lazy';
   img.onerror   = function() { this.onerror = null; this.src = BLANK; };
-  card.appendChild(img);
 
-  // Mode-specific UI
-  switch(CARD_MODE) {
-    case 'c': buildC(card, obra); break;
-    case 'a': buildA(card, obra); break;
-    case 'b': buildB(card, obra); break;
-    // 'photo': no extras
-  }
+  // Mobile (touch devices): tap → info.html
+  wrap.addEventListener('click', e => {
+    if (e.target.closest('.ov-btn')) return;
+    if (!window.matchMedia('(hover: hover)').matches) {
+      goInfo(obra.id);
+    }
+  });
+
+  // Desktop overlay with hover buttons
+  const overlay = document.createElement('div');
+  overlay.className = 'card-overlay';
+
+  const btnExpand = document.createElement('button');
+  btnExpand.className = 'ov-btn';
+  btnExpand.innerHTML = '&#10530;&ensp;Ampliar';
+  btnExpand.onclick = e => { e.stopPropagation(); openLightbox(obra); };
+
+  const btnInfo = document.createElement('a');
+  btnInfo.className = 'ov-btn';
+  btnInfo.textContent = 'Información';
+  btnInfo.href = `info.html?id=${obra.id}`;
+  btnInfo.onclick = e => e.stopPropagation();
+
+  overlay.append(btnExpand, btnInfo);
+  wrap.append(img, overlay);
+  card.appendChild(wrap);
+
   return card;
 }
 
-/* ── Mode C ── */
-function buildC(card, obra) {
-  const body = document.createElement('div');
-  body.className = 'card-body';
-
-  const link = document.createElement('a');
-  link.className   = 'card-title-link';
-  link.textContent = obra.title || '—';
-  link.href        = '#';
-  link.onclick     = e => { e.preventDefault(); openModal(obra); };
-
-  const dim = document.createElement('div');
-  dim.className   = 'card-measures';
-  dim.textContent = obra.dimStr;
-
-  const btn = document.createElement('button');
-  btn.className   = 'btn-ar-card';
-  btn.textContent = 'Ver en pared';
-  btn.onclick     = e => { e.stopPropagation(); goAR(obra.id); };
-
-  body.append(link, dim, btn);
-  card.appendChild(body);
-}
-
-/* ── Mode A ── */
-function buildA(card, obra) {
-  const ovl = document.createElement('div');
-  ovl.className = 'card-overlay';
-  const btn = document.createElement('button');
-  btn.className   = 'ov-btn ov-btn-ar';
-  btn.textContent = 'Ver en pared';
-  btn.onclick     = e => { e.stopPropagation(); goAR(obra.id); };
-  ovl.appendChild(btn);
-  card.appendChild(ovl);
-  card.onclick = () => openModal(obra);
-}
-
-/* ── Mode B ── */
-function buildB(card, obra) {
-  const ovl = document.createElement('div');
-  ovl.className = 'card-overlay';
-
-  const title = document.createElement('div');
-  title.className   = 'ov-title';
-  title.textContent = obra.title || '—';
-
-  const dim = document.createElement('div');
-  dim.className   = 'ov-dim';
-  dim.textContent = obra.dimStr;
-
-  const btns = document.createElement('div');
-  btns.className = 'ov-btns';
-
-  const btnInfo = document.createElement('button');
-  btnInfo.className   = 'ov-btn';
-  btnInfo.textContent = 'Información';
-  btnInfo.onclick     = e => { e.stopPropagation(); openModal(obra); };
-
-  const btnAR = document.createElement('button');
-  btnAR.className   = 'ov-btn ov-btn-ar';
-  btnAR.textContent = 'Ver en pared';
-  btnAR.onclick     = e => { e.stopPropagation(); goAR(obra.id); };
-
-  btns.append(btnInfo, btnAR);
-  ovl.append(title, dim, btns);
-  card.appendChild(ovl);
+// ══════════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════════
+function goInfo(id) {
+  window.location.href = `info.html?id=${id}`;
 }
 
 // ══════════════════════════════════════════════════════
-//  INFO MODAL
+//  SCROLL TO TOP
 // ══════════════════════════════════════════════════════
-function openModal(obra) {
-  modalObra = obra;
-  document.getElementById('info-img').src        = obra.image || '';
-  document.getElementById('info-img').alt        = obra.title || '';
-  document.getElementById('info-name').textContent = obra.title || '—';
-  document.getElementById('info-meta').textContent =
-    [obra.dimStr, obra.technique].filter(Boolean).join('  ·  ');
+const scrollTopBtn = document.getElementById('scroll-top');
+window.addEventListener('scroll', () => {
+  scrollTopBtn.classList.toggle('visible', window.scrollY > 300);
+}, { passive: true });
+scrollTopBtn.addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
 
-  const award = document.getElementById('info-award');
-  award.textContent = obra.award ? ('🏆 ' + obra.award) : '';
-  award.classList.toggle('show', !!obra.award);
+// ══════════════════════════════════════════════════════
+//  LIGHTBOX
+// ══════════════════════════════════════════════════════
+let lbIndex = 0;
+let lbList  = [];
 
-  document.getElementById('info-desc').textContent = obra.description || '';
-  document.getElementById('info-modal').classList.add('show');
+function openLightbox(obra) {
+  lbList  = getFiltered();
+  lbIndex = lbList.findIndex(o => o.id === obra.id);
+  if (lbIndex < 0) lbIndex = 0;
+  showLbImage();
+  document.getElementById('lightbox').classList.add('show');
   document.body.style.overflow = 'hidden';
 }
 
-function closeModal() {
-  document.getElementById('info-modal').classList.remove('show');
+function showLbImage() {
+  const obra = lbList[lbIndex];
+  if (!obra) return;
+  const el = document.getElementById('lb-img');
+  el.src = obra.image || '';
+  el.alt = obra.title || '';
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('show');
   document.body.style.overflow = '';
-  modalObra = null;
 }
 
-document.getElementById('info-close').onclick = closeModal;
-document.getElementById('info-modal').onclick = e => {
-  if (e.target === document.getElementById('info-modal')) closeModal();
-};
-document.getElementById('info-ar').onclick = () => { if (modalObra) goAR(modalObra.id); };
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+function navLightbox(delta) {
+  if (lbList.length === 0) return;
+  lbIndex = (lbIndex + delta + lbList.length) % lbList.length;
+  showLbImage();
+}
+
+document.getElementById('lb-close').onclick = closeLightbox;
+document.getElementById('lb-left').onclick  = () => navLightbox(-1);
+document.getElementById('lb-right').onclick = () => navLightbox(1);
+document.getElementById('lightbox').addEventListener('click', e => {
+  if (e.target === document.getElementById('lightbox')) closeLightbox();
+});
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lightbox').classList.contains('show')) return;
+  if (e.key === 'ArrowLeft')  navLightbox(-1);
+  if (e.key === 'ArrowRight') navLightbox(1);
+  if (e.key === 'Escape')     closeLightbox();
+});
 
 // ══════════════════════════════════════════════════════
-//  GO TO AR
+//  INSTRUCTIONS OVERLAY (shown once on first visit)
 // ══════════════════════════════════════════════════════
-function goAR(id) {
-  if (id !== undefined && id !== null) localStorage.setItem('ar_preselect', id);
-  window.location.href = 'preview.html';
+function showIntro() {
+  if (localStorage.getItem('ar_intro_seen')) return;
+  const isDesktop = window.matchMedia('(hover: hover)').matches;
+  document.getElementById('intro-msg').textContent = isDesktop
+    ? 'Desliza el mouse encima de la pintura para expandir o ver su información.'
+    : 'Toca una pintura para ver su información o proyectarla en tu pared con realidad aumentada.';
+  document.getElementById('intro-overlay').classList.remove('hidden');
 }
+
+function dismissIntro() {
+  localStorage.setItem('ar_intro_seen', '1');
+  document.getElementById('intro-overlay').classList.add('hidden');
+}
+
+document.getElementById('intro-ok').onclick = dismissIntro;
+document.getElementById('intro-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('intro-overlay')) dismissIntro();
+});
 
 // ══════════════════════════════════════════════════════
 //  BOOT
