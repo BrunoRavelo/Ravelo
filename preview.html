@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>AR Preview — Alfredo Ravelo</title>
+  <title>AR Preview. Alfredo Ravelo</title>
 
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -372,6 +372,21 @@
     #no-obras { display: none; padding: 8px 20px 12px; color: rgba(255,255,255,0.2); font-size: 11px; font-weight: 300; }
     #no-obras.show { display: block; }
 
+    /* ── Paint image loading indicator ──────────── */
+    #paint-loading {
+      position: fixed; inset: 0;
+      display: none; align-items: center; justify-content: center;
+      z-index: 15; pointer-events: none;
+    }
+    #paint-loading.show { display: flex; }
+    #paint-loading .p-spin {
+      width: 36px; height: 36px;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-top-color: rgba(255,255,255,0.65);
+      border-radius: 50%;
+      animation: spin 0.85s linear infinite;
+    }
+
     /* ── Loading & Permission ─────────────────────── */
     #loading-screen {
       position: fixed; inset: 0; background: #000;
@@ -398,6 +413,14 @@
       padding: 48px 40px; z-index: 200;
     }
     #permission-screen.show { display: flex; }
+
+    #perm-logo {
+      height: clamp(52px, 10vw, 72px);
+      width: auto;
+      display: block;
+      margin: 0 auto 22px;
+      opacity: 0.9;
+    }
 
     /* Minimalist SVG camera icon */
     .cam-icon-wrap {
@@ -488,8 +511,8 @@
 
 <!-- Permission -->
 <div id="permission-screen">
+  <img id="perm-logo" src="assets/logo.png" alt="Alfredo Ravelo">
   <h1>Ver en tu pared</h1>
-  <div class="subtitle">Alfredo Ravelo</div>
   <!-- Minimalist SVG camera icon -->
   <div class="cam-icon-wrap">
     <svg width="28" height="24" viewBox="0 0 28 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
@@ -530,6 +553,9 @@
   <img id="paint-img" src="" alt="" crossorigin="anonymous">
   <div id="paint-dims"></div>
 </div>
+
+<!-- Paint loading indicator -->
+<div id="paint-loading"><div class="p-spin"></div></div>
 
 <!-- Screenshot preview -->
 <div id="snap-preview">
@@ -588,13 +614,13 @@
   <div id="instr-card">
     <h2>Cómo funciona</h2>
     <div class="step"><div class="step-num">1</div>
-      <div class="step-text">Elige una pintura — arrástrala hacia la pared. Usa el slider o <strong>pinch con dos dedos</strong> para escalar</div></div>
+      <div class="step-text">Elige una pintura, arrástrala hacia la pared. Usa el slider o <strong>pinch con dos dedos</strong> para escalar</div></div>
     <div class="step"><div class="step-num">2</div>
       <div class="step-text">Toca la barra inferior para <strong>ocultar o mostrar</strong> el catálogo</div></div>
     <div class="step"><div class="step-num">3</div>
-      <div class="step-text"><strong>A4 —</strong> coloca una hoja carta en la pared, ajusta el slider hasta que el marco coincida → escala real calibrada</div></div>
+      <div class="step-text"><strong>A4:</strong> coloca una hoja carta en la pared, ajusta el slider hasta que el marco coincida. Escala real calibrada.</div></div>
     <div class="step"><div class="step-num">4</div>
-      <div class="step-text"><strong>10cm —</strong> toca dos puntos en la pared separados exactamente 10 cm → calibración precisa</div></div>
+      <div class="step-text"><strong>10cm:</strong> toca dos puntos en la pared separados exactamente 10 cm. Calibración precisa.</div></div>
     <div class="step"><div class="step-num">5</div>
       <div class="step-text">Ícono de cámara → guarda una foto de la pintura en tu pared</div></div>
     <button id="close-instr">Entendido</button>
@@ -779,7 +805,9 @@ function selectObra(obra, thumbEl) {
   document.querySelectorAll('.thumb-card').forEach(c => c.classList.remove('selected'));
   thumbEl.classList.add('selected');
 
+  $('paint-loading').classList.add('show');
   paintImg.onload = () => {
+    $('paint-loading').classList.remove('show');
     // ── ORIENTATION FIX ──────────────────────────────────────────────
     // Declared measures always go smaller-first (e.g. "50 x 70 cm")
     // regardless of actual orientation. The PHOTO determines which
@@ -811,6 +839,7 @@ function selectObra(obra, thumbEl) {
   };
 
   paintImg.onerror = () => {
+    $('paint-loading').classList.remove('show');
     // Fallback: can't detect photo orientation, use declared ratio as-is
     paintPhysW  = w;
     paintPhysH  = h;
@@ -824,7 +853,7 @@ function selectObra(obra, thumbEl) {
   paintImg.src = obra.image;
   topTitle.textContent = obra.title;
   selectHint.classList.remove('show');
-  showInfo(`${obra.title} — ${w} × ${h} cm`, 2800);
+  showInfo(`${obra.title}. ${w} × ${h} cm`, 2800);
   collapsePanel();
 }
 
@@ -1146,14 +1175,14 @@ $('start-btn').addEventListener('click', async () => {
         const tmp = document.createElement('div');
         tmp.className = 'thumb-card';
         selectObra(obra, tmp);
-        showInfo(`${obra.title} — ${pm(obra.measures).w > pm(obra.measures).h ? pm(obra.measures).w : pm(obra.measures).h < pm(obra.measures).w ? pm(obra.measures).h : pm(obra.measures).w} cm`, 2800);
+        showInfo(`${obra.title}. ${pm(obra.measures).w} × ${pm(obra.measures).h} cm`, 2800);
         // Don't show instructions — go straight to AR
         return;
       }
     }
 
     localStorage.getItem(SEEN_KEY) ? selectHint.classList.add('show') : instrOvl.classList.add('show');
-    if (localStorage.getItem(CALIB_KEY)) showInfo('Escala restaurada — puedes recalibrar con A4 o 10cm', 3000);
+    if (localStorage.getItem(CALIB_KEY)) showInfo('Escala restaurada. Puedes recalibrar con A4 o 10cm.', 3000);
   } catch (err) {
     const el = $('err-msg');
     el.style.display = 'block';

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alfredo Ravelo — Acuarelas</title>
+  <title>Alfredo Ravelo. Acuarelas</title>
   <style>
     /* ══════════════════════════════════════════════
        RESET & BASE
@@ -14,11 +14,11 @@
       --bg:      #000;
       --border:  rgba(255,255,255,0.07);
       --text:    #fff;
-      --dim:     rgba(255,255,255,0.38);
-      --faint:   rgba(255,255,255,0.16);
-      --gap:     10px;
+      --dim:     rgba(255,255,255,0.72);
+      --faint:   rgba(255,255,255,0.50);
+      --gap:     18px;
       /* Horizontal page padding — scales with viewport */
-      --px: clamp(12px, 3.5vw, 48px);
+      --px: clamp(16px, 8vw, 160px);
     }
 
     html { background: var(--bg); }
@@ -60,15 +60,18 @@
       gap: 10px;
     }
 
-    /* Logo image: visible on tablet+ */
     .brand-logo {
-      height: clamp(32px, 5vw, 44px);
+      height: clamp(28px, 5vw, 44px);
       width: auto;
       display: block;
       object-fit: contain;
+      flex-shrink: 0;
+    }
+    .brand-text {
+      white-space: nowrap;
     }
     @media (max-width: 540px) {
-      .brand-logo { display: none; }
+      .brand-text { display: none; }
     }
 
     .nav-links {
@@ -94,16 +97,11 @@
       display: flex;
       align-items: center;
       gap: 5px;
-      border: 1px solid rgba(255,255,255,0.16);
-      padding: 5px 12px;
-      border-radius: 2px;
-      color: rgba(255,255,255,0.6);
-      transition: all 0.2s;
+      color: rgba(255,255,255,0.78);
+      transition: color 0.2s;
     }
     .nav-link-ar:hover {
-      border-color: rgba(255,255,255,0.4);
       color: var(--text);
-      background: rgba(255,255,255,0.04);
     }
     /* Hide "Ver en pared" text label on very small phones, keep icon */
     @media (max-width: 360px) {
@@ -247,10 +245,23 @@
     }
 
     @media (max-width: 540px) {
-      :root { --gap: 6px; }
-      .gi-large, .gi-medium { grid-column: span 12; }
-      .gi-small { grid-column: span 6; }
+      :root { --gap: 12px; }
+      .gi-large, .gi-medium, .gi-small { grid-column: span 12; }
     }
+
+    /* ── Skeleton ────────────────────────────── */
+    @keyframes shimmer {
+      0%   { background-position: -800px 0; }
+      100% { background-position:  800px 0; }
+    }
+    .sk-card {
+      background: linear-gradient(90deg, #111 25%, #1e1e1e 50%, #111 75%);
+      background-size: 1600px 100%;
+      animation: shimmer 1.8s infinite linear;
+      border-radius: 6px;
+      aspect-ratio: 4 / 3;
+    }
+    .sk-card.sk-tall { aspect-ratio: 3 / 4; }
 
     /* ── Card ─────────────────────────────────── */
     .card { display: flex; flex-direction: column; }
@@ -259,7 +270,8 @@
       position: relative;
       overflow: hidden;
       cursor: pointer;
-      border-radius: 6px;  /* rounded corners like original */
+      border-radius: 6px;
+      background: #111;  /* placeholder while image lazy-loads */
     }
 
     .card-img {
@@ -270,7 +282,7 @@
       transition: transform 0.3s ease;
     }
 
-    @media (hover: hover) {
+    @media (hover: hover) and (pointer: fine) {
       .card-img-wrap:hover .card-img { transform: scale(1.04); }
     }
 
@@ -288,10 +300,10 @@
       border-radius: 6px;
     }
 
-    @media (hover: hover) {
+    @media (hover: hover) and (pointer: fine) {
       .card-img-wrap:hover .card-overlay { opacity: 1; }
     }
-    @media (hover: none) {
+    @media (pointer: coarse) {
       .card-overlay { display: none; }
     }
 
@@ -481,7 +493,7 @@
     }
 
     #intro-msg {
-      color: rgba(255,255,255,0.6);
+      color: rgba(255,255,255,0.82);
       font-size: clamp(13px, 1.8vw, 15px);
       font-weight: 300;
       line-height: 1.75;
@@ -490,8 +502,8 @@
 
     #intro-ok {
       background: transparent;
-      border: 1px solid rgba(255,255,255,0.22);
-      color: rgba(255,255,255,0.55);
+      border: 1px solid rgba(255,255,255,0.35);
+      color: rgba(255,255,255,0.78);
       font-family: 'Helvetica Neue', Arial, sans-serif;
       font-size: clamp(9px, 1.1vw, 11px);
       font-weight: 300;
@@ -525,11 +537,10 @@
 <nav class="navbar">
   <a href="index.html" class="brand">
     <img class="brand-logo" src="assets/logo.png" alt="Alfredo Ravelo">
-    Alfredo Ravelo
+    <span class="brand-text">Alfredo Ravelo</span>
   </a>
   <div class="nav-links">
-    <a href="index.html" class="nav-link active">Galería</a>
-    <a href="size.html" class="nav-link">Tamaños</a>
+    <a href="size.html" class="nav-link">Guía de Tamaños</a>
     <a href="preview.html" class="nav-link nav-link-ar">
       <svg width="13" height="11" viewBox="0 0 28 24" fill="none" stroke="currentColor"
            stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -594,7 +605,7 @@
   </div>
 </div>
 
-<footer>© Alfredo Ravelo — Todos los derechos reservados</footer>
+<footer>© Alfredo Ravelo. Todos los derechos reservados</footer>
 
 <script>
 // ══════════════════════════════════════════════════════
@@ -675,9 +686,33 @@ function parseM(m) {
 }
 
 // ══════════════════════════════════════════════════════
+//  SKELETON LOADING
+// ══════════════════════════════════════════════════════
+function showSkeletons() {
+  const gallery = document.getElementById('gallery');
+  document.getElementById('loading').style.display = 'none';
+  const layout = [
+    ['gi-large', false], ['gi-large', true],  ['gi-small', false], ['gi-small', true],
+    ['gi-large', false], ['gi-small', false],  ['gi-large', true],  ['gi-small', false],
+    ['gi-large', false], ['gi-large', false],  ['gi-small', true],  ['gi-small', false],
+    ['gi-large', true],  ['gi-small', false],
+  ];
+  layout.forEach(([cls, tall], i) => {
+    const d = document.createElement('div');
+    d.className = `sk-card ${cls}${tall ? ' sk-tall' : ''}`;
+    gallery.appendChild(d);
+  });
+}
+
+function removeSkeletons() {
+  document.querySelectorAll('.sk-card').forEach(el => el.remove());
+}
+
+// ══════════════════════════════════════════════════════
 //  LOAD obras.json
 // ══════════════════════════════════════════════════════
 async function init() {
+  showSkeletons();
   try {
     const r = await fetch('obras.json');
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -699,9 +734,21 @@ async function init() {
     allObras = [];
   }
 
-  document.getElementById('loading').style.display = 'none';
+  // Restore filter state from previous visit
+  activeCat  = localStorage.getItem('filter_cat')  || 'todas';
+  activeSize = localStorage.getItem('filter_size') || 'todas';
+
+  removeSkeletons();
   buildFilters();
   renderGallery();
+
+  // Restore scroll position if returning from info.html
+  const savedScroll = sessionStorage.getItem('scroll_pos');
+  if (savedScroll) {
+    sessionStorage.removeItem('scroll_pos');
+    requestAnimationFrame(() => window.scrollTo(0, parseInt(savedScroll, 10)));
+  }
+
   showIntro();
 }
 
@@ -725,9 +772,11 @@ function buildFilters() {
   const catRow = document.getElementById('cat-row');
   cats.forEach(cat => {
     const n  = cat === 'todas' ? allObras.length : (counts[cat] || 0);
-    const el = makePill(cap(cat), n, cat === 'todas');
+    const el = makePill(cap(cat), n, cat === activeCat);
+    el.dataset.cat = cat;
     el.onclick = () => {
       activeCat = cat;
+      localStorage.setItem('filter_cat', cat);
       catRow.querySelectorAll('.fpill').forEach(p => p.classList.remove('active'));
       el.classList.add('active');
       updateIndicator();
@@ -745,10 +794,11 @@ function buildFilters() {
   ];
   const sizeRow = document.getElementById('size-row');
   SIZES.forEach(sz => {
-    const el = makePill(sz.label, null, sz.key === 'todas');
+    const el = makePill(sz.label, null, sz.key === activeSize);
     el.title = sz.tip || '';
     el.onclick = () => {
       activeSize = sz.key;
+      localStorage.setItem('filter_size', sz.key);
       sizeRow.querySelectorAll('.fpill').forEach(p => p.classList.remove('active'));
       el.classList.add('active');
       updateIndicator();
@@ -768,6 +818,23 @@ function makePill(label, count, active) {
 function updateIndicator() {
   const on = activeCat !== 'todas' || activeSize !== 'todas';
   document.getElementById('active-indicator').classList.toggle('show', on);
+}
+
+function updateCatCounts() {
+  const sizeFiltered = allObras.filter(o => {
+    if (activeSize === 'todas') return true;
+    const [min, max] = SIZE_RANGES[activeSize] || [0, Infinity];
+    return o.area > min && o.area <= max;
+  });
+  const counts = {};
+  sizeFiltered.forEach(o => { counts[o.cat] = (counts[o.cat] || 0) + 1; });
+
+  document.querySelectorAll('#cat-row .fpill').forEach(pill => {
+    const cat = pill.dataset.cat;
+    const span = pill.querySelector('.fpill-n');
+    if (!span) return;
+    span.textContent = cat === 'todas' ? sizeFiltered.length : (counts[cat] || 0);
+  });
 }
 
 // ══════════════════════════════════════════════════════
@@ -811,6 +878,7 @@ function renderGallery() {
     : `${list.length} / ${allObras.length} obras`;
 
   list.forEach(obra => gallery.appendChild(buildCard(obra)));
+  updateCatCounts();
 }
 
 // ══════════════════════════════════════════════════════
@@ -833,7 +901,7 @@ function buildCard(obra) {
   // Mobile (touch devices): tap → info.html
   wrap.addEventListener('click', e => {
     if (e.target.closest('.ov-btn')) return;
-    if (!window.matchMedia('(hover: hover)').matches) {
+    if (window.matchMedia('(pointer: coarse)').matches) {
       goInfo(obra.id);
     }
   });
@@ -851,7 +919,7 @@ function buildCard(obra) {
   btnInfo.className = 'ov-btn';
   btnInfo.textContent = 'Información';
   btnInfo.href = `info.html?id=${obra.id}`;
-  btnInfo.onclick = e => e.stopPropagation();
+  btnInfo.onclick = e => { sessionStorage.setItem('scroll_pos', window.scrollY); e.stopPropagation(); };
 
   overlay.append(btnExpand, btnInfo);
   wrap.append(img, overlay);
@@ -864,6 +932,7 @@ function buildCard(obra) {
 //  NAVIGATION
 // ══════════════════════════════════════════════════════
 function goInfo(id) {
+  sessionStorage.setItem('scroll_pos', window.scrollY);
   window.location.href = `info.html?id=${id}`;
 }
 
@@ -930,7 +999,7 @@ document.addEventListener('keydown', e => {
 // ══════════════════════════════════════════════════════
 function showIntro() {
   if (localStorage.getItem('ar_intro_seen')) return;
-  const isDesktop = window.matchMedia('(hover: hover)').matches;
+  const isDesktop = window.matchMedia('(pointer: fine)').matches;
   document.getElementById('intro-msg').textContent = isDesktop
     ? 'Desliza el mouse encima de la pintura para expandir o ver su información.'
     : 'Toca una pintura para ver su información o proyectarla en tu pared con realidad aumentada.';

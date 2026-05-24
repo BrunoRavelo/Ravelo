@@ -14,42 +14,65 @@
       background-color: black;
       color: white;
       font-family: Arial, sans-serif;
-      padding: 20px;
+      padding: clamp(10px, 3vw, 24px);
+      padding-top: calc(48px + clamp(10px, 3vw, 24px));
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    #top-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 48px;
+      background: rgba(0,0,0,0.97);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      align-items: center;
+      padding: 0 clamp(12px, 3vw, 28px);
+      z-index: 100;
     }
     .back-link {
-      color: white;
+      color: rgba(255,255,255,0.70);
       text-decoration: none;
-      font-size: 18px;
-      margin-bottom: 20px;
-      display: inline-block;
+      font-size: clamp(13px, 1.8vw, 16px);
+      letter-spacing: 0.5px;
     }
-    .back-link:hover {
-      text-decoration: underline;
-    }
-    .artwork-image {
+    .back-link:hover { color: #fff; }
+
+    /* Imagen: altura limitada para que quepa todo sin scroll */
+    #artworkImage {
       max-width: 100%;
+      max-height: clamp(160px, 32vh, 300px);
+      width: auto;
       height: auto;
-      margin-bottom: 20px;
+      border-radius: 6px;
+      display: block;
+      margin: 0 auto 10px;
     }
+
     .artwork-details {
-      margin-top: 20px;
+      margin-top: 10px;
+      text-align: left;
     }
     .artwork-details h2 {
-      font-size: 24px;
-      margin-bottom: 10px;
+      font-size: clamp(15px, 2.2vw, 20px);
+      margin-bottom: 6px;
     }
     .artwork-details p {
-      font-size: 18px;
-      margin-bottom: 10px;
+      font-size: clamp(12px, 1.5vw, 14px);
+      margin-bottom: 5px;
+      color: rgba(255,255,255,0.80);
+      line-height: 1.4;
     }
     #ar-btn {
       display: block;
       width: 100%;
-      margin-top: 24px;
-      padding: 14px;
+      margin-top: 14px;
+      padding: 11px;
       background: transparent;
-      border: 1px solid rgba(255,255,255,0.25);
-      color: rgba(255,255,255,0.65);
+      border: 1px solid rgba(255,255,255,0.35);
+      color: rgba(255,255,255,0.82);
       font-family: Arial, sans-serif;
       font-size: 11px;
       font-weight: 300;
@@ -69,20 +92,20 @@
 </head>
 <body>
 
-  <div class="container my-5">
-    <!-- Enlace para volver -->
+  <nav id="top-bar">
     <a href="index.html" class="back-link">&larr; Volver</a>
-    
+  </nav>
+
+  <div class="container mt-2 mb-3">
     <!-- Fila de Bootstrap que centra la columna -->
     <div class="row justify-content-center">
       <!-- El div con id="imageColumn" donde se asignarán dinámicamente las clases -->
       <div id="imageColumn" class="text-center">
         
         <!-- Imagen centrada y responsiva con clases de Bootstrap -->
-        <img 
-          id="artworkImage" 
-          class="img-fluid d-block mx-auto" 
-          src="" 
+        <img
+          id="artworkImage"
+          src=""
           alt="Imagen de la obra"
         >
 
@@ -94,7 +117,7 @@
           <p id="artworkDescription">Descripción: </p>
           <p id="artworkAward"></p>
           <button id="ar-btn" onclick="goAR()">
-            Ver en pared — Realidad Aumentada
+            Ver en pared. Realidad Aumentada
           </button>
         </div>
       </div>
