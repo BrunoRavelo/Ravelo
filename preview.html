@@ -511,7 +511,7 @@
 
 <!-- Permission -->
 <div id="permission-screen">
-  <img id="perm-logo" src="assets/logo.png" alt="Alfredo Ravelo">
+  <img id="perm-logo" src="assetswebp/logo.webp" alt="Alfredo Ravelo">
   <h1>Ver en tu pared</h1>
   <!-- Minimalist SVG camera icon -->
   <div class="cam-icon-wrap">
@@ -702,9 +702,9 @@ async function loadObras() {
   } catch (e) {
     console.warn('Fallback data:', e.message);
     obras = [
-      { id:1,  title:'Sinfonía de Flores',   image:'assets/flores/flores1.jpg',   measures:'110 x 150 cm' },
-      { id:3,  title:'Ramillete de Alegría', image:'assets/flores/flores3.jpg',   measures:'50 x 70 cm'   },
-      { id:14, title:'Mirada de Inocencia',  image:'assets/rostros/rostro1.jpg',  measures:'50 x 70 cm'   },
+      { id:1,  title:'Sinfonía de Flores',   image:'assetswebp/flores/flores1.webp',   measures:'110 x 150 cm' },
+      { id:3,  title:'Ramillete de Alegría', image:'assetswebp/flores/flores3.webp',   measures:'50 x 70 cm'   },
+      { id:14, title:'Mirada de Inocencia',  image:'assetswebp/rostros/rostro1.webp',  measures:'50 x 70 cm'   },
     ];
   }
   obras = obras.map(o => ({ ...o, cat: inferCat(o.image) }));
